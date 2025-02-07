@@ -29,10 +29,10 @@ import types
 import importlib.util
 
 RUN_BY_PROJECT = False
+print(__file__)
 if os.path.basename(os.path.dirname(__file__)) == "Scripts":
     project_root = os.path.dirname(os.path.dirname(__file__))
     sys.path.append(project_root)
     RUN_BY_PROJECT = os.path.basename(project_root) != "PyCra"
-    if RUN_BY_PROJECT:
-        os.chdir(project_root)
+    os.chdir(project_root)
 RUN_BY_ENGINE = not RUN_BY_PROJECT
