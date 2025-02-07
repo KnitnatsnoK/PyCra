@@ -29,7 +29,6 @@ import types
 import importlib.util
 
 RUN_BY_PROJECT = False
-print(__file__)
 if os.path.basename(os.path.dirname(__file__)) == "Scripts":
     project_root = os.path.dirname(os.path.dirname(__file__))
     sys.path.append(project_root)
