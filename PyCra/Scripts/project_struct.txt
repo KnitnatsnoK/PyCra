@@ -1,0 +1,35 @@
+/ProjectRoot
+│
+├── /Assets
+│   ├── /Sprites          # All sprite images, textures, and atlases
+│   ├── /Audio            # Sound effects and music files
+│   ├── /Fonts            # Fonts used in the game
+│   ├── /Animations       # Animation files or definitions
+│   ├── /Prefabs          # Reusable entities or object blueprints
+│   ├── /UI               # UI assets like buttons, backgrounds
+│   └── /Shaders          # Custom shaders for advanced rendering
+│
+├── /Scenes
+│   ├── /Level1           # Folder for a specific scene/level
+│   ├── /Level2           # Another scene/level folder
+│   └── ...               # Other levels
+│
+├── /Scripts
+│   ├── /GameLogic        # Scripts defining the game’s behavior
+│   ├── /Components       # Reusable components (e.g., movement, health)
+│   ├── /AI               # AI scripts (e.g., pathfinding, decision making)
+│   └── /UI               # UI-related scripts (e.g., button behaviors)
+│
+├── /Build
+│   └── ...               # Files generated when building or exporting the game
+│
+├── /Config
+│   ├── input.json        # Input settings (keybindings, gamepad mappings)
+│   ├── graphics.json     # Graphics settings (resolution, fullscreen)
+│   └── project.json      # General project settings (game name, version)
+│
+├── /Logs
+│   └── ...               # Logs generated during development or runtime
+│
+└── /Docs                 # Documentation for the game project
+    └── design_docs.md    # Game design documents and notes

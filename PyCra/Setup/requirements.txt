@@ -1,0 +1,5 @@
+hidapi==0.14.0.post2
+numpy==2.2.2
+pygame-ce==2.5.2
+PyGLM==2.7.1
+screeninfo==0.8.1
