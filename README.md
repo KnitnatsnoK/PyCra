@@ -13,11 +13,11 @@ It provides a simple yet powerful framework for creating 2D games programmatical
 - GUI support for in-game interfaces (text boxes, pop-ups, scroll wheels, ...)
 
 ## Installation
-To install Pycra, clone the repository and install dependencies:
+To install Pycra, clone the repository and run setup.py to install all dependencies:
 ```bash
 git clone https://github.com/KnitnatsnoK/PyCra
-cd PyCra
-pip install -r requirements.txt
+cd PyCra/PyCra
+python setup.py
 ```
 
 ## Getting Started
