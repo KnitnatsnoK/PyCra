@@ -17,7 +17,7 @@ To install Pycra, clone the repository and run setup.py to install all dependenc
 ```bash
 git clone https://github.com/KnitnatsnoK/PyCra
 cd PyCra/PyCra
-python setup.py
+python Setup/setup.py
 ```
 
 ## Getting Started
