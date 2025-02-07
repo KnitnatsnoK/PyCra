@@ -25,6 +25,9 @@ PyCra will always create a main.py file with the necessairy tick()-function for 
 You can add anything you want to main.py and it gets run in the beginning of runtime.
 A PyCra-game will run the tick()-function every frame, so it's a ```while True:```-replacement.
 
+## Documentation
+Check out the full documentation [here](https://your-docs-link.com).
+
 ## License
 Pycra is available under a **custom MIT license** with commercial use restrictions. 
 
