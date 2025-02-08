@@ -1,7 +1,7 @@
 from value_assets import *
 from window_manager import Window_Manager, center_vec2, quit_engine
 from imports import KEYS, MOUSE, render_text, load_image, random_vec3, create_project, open_project, run_project, center, create_surface, create_boundary
-from objects import save_new_scene, load_scene
+from objects import SCENES, SCENE_NAMES, SCENE, save_scene, save_new_scene, load_scene
 
 class UI_Element:
     def __init__(self, window_manager:Window_Manager, pos:vec2, size:vec2|None, action:list|int|None=None):
@@ -65,7 +65,45 @@ class UI_Element:
             self.action()
 
     def handle_int_action(self):
-        pass
+        if self.action == QUIT_ENGINE:
+            quit_engine()
+        elif self.action == OPEN_PROJECT:
+            open_project(self.window_manager, initial_directory="Projects\\")
+        elif self.action == COLOR_TEST:
+            random_color = random_vec3(0, 255)
+            self.set_colors(random_color, vec3(255)-random_color)
+        elif self.action == CREATE_PROJECT:
+            project_name = input("Enter a project name: ")
+            if project_name != "":
+                create_project(project_name)
+            else:
+                print("No project was created")
+        elif self.action == CHANGE_NEXT_SCENE:
+            set_global("<Scene>", (get_global("<Scene>").value + 1)%len(get_global("<SCENES>").value))
+            set_global("<Game Objects>", f"Game Objects: {len(get_global("<SCENES>").value[get_global("<Scene>").value])}")
+            
+            set_global("<Loaded Scene>", f"Scene: {get_global("<Scene>").value+1}/{len(get_global("<SCENES>").value)}")
+        elif self.action == SAVE_SCENE:
+            save_scene(SCENES[SCENE.value], f"Projects\\{get_global("<Project_Opened>").value}\\Scenes\\", SCENE_NAMES[SCENE.value])
+            print(f"Saved {SCENE_NAMES[SCENE.value]}")
+        elif self.action == CREATE_SCENE:
+            scene_name = input("Enter a scene name: ")
+            if scene_name != "":
+                new_scene_index = len(get_global("<SCENES>").value)
+                new_scene = []
+                if save_new_scene(new_scene, f"Projects\\{get_global("<Project_Opened>").value}\\Scenes\\", scene_name):
+                    get_global("<SCENES>").value.append(new_scene)
+                    get_global("<Scene_Names>").value.append(scene_name)
+                    load_scene(new_scene_index, f"Projects\\{get_global("<Project_Opened>").value}\\Scenes\\", scene_name)
+                    set_global("<Scene>", new_scene_index)
+
+                    set_global("<Loaded Scene>", f"Scene: {get_global("<Scene>").value+1}/{len(get_global("<SCENES>").value)}")
+                elif not PRINT_ASSET_EXISTENCE:
+                    print(f"The scene '{scene_name}' already exists.")
+            else:
+                print("No scene was created")
+        elif self.action == RUN_PROJECT:
+            run_project(self.window_manager)
 
     def draw(self):
         if self.image_update_needed:
@@ -141,41 +179,6 @@ class Text_Box(Text_Element):
     def set_text_color(self, text_color:vec3):
         self.text_color = text_color
         self.image_update_needed = True
-
-    def handle_int_action(self):
-        if self.action == 0:
-            quit_engine()
-        elif self.action == 1:
-            open_project(self.window_manager, initial_directory="Projects\\")
-        elif self.action == 2:
-            random_color = random_vec3(0, 255)
-            self.set_colors(random_color, vec3(255)-random_color)
-        elif self.action == 3:
-            project_name = input("Enter a project name: ")
-            if project_name != "":
-                create_project(project_name)
-            else:
-                print("No project was created")
-        elif self.action == 4:
-            set_global("<Scene>", (get_global("<Scene>").value + 1)%len(get_global("<SCENES>").value))
-            set_global("<Game Objects>", f"Game Objects: {len(get_global("<SCENES>").value[get_global("<Scene>").value])}")
-            
-            set_global("<Loaded Scene>", f"Scene: {get_global("<Scene>").value+1}/{len(get_global("<SCENES>").value)}")
-        elif self.action == 5:
-            scene_name = input("Enter a scene name: ")
-            if scene_name != "":
-                new_scene_index = len(get_global("<SCENES>").value)
-                new_scene = []
-                if save_new_scene(new_scene, f"Projects\\{get_global("<Project_Opened>").value}\\Scenes\\", scene_name):
-                    get_global("<SCENES>").value.append(new_scene)
-                    load_scene(new_scene_index, f"Projects\\{get_global("<Project_Opened>").value}\\Scenes\\", scene_name)
-                    set_global("<Scene>", new_scene_index)
-
-                    set_global("<Loaded Scene>", f"Scene: {get_global("<Scene>").value+1}/{len(get_global("<SCENES>").value)}")
-                elif not PRINT_ASSET_EXISTENCE:
-                    print(f"The scene '{scene_name}' already exists.")
-            else:
-                print("No scene was created")
 
 class Pop_up(Text_Element):
     def __init__(self, window_manager:Window_Manager, pos:vec2|None=None, size:vec2|None=None, bg_color:vec3=vec3(50), text_color:vec3=None, text:str="", font:str|None="Comic Sans", font_size:int=18):
@@ -344,10 +347,6 @@ class Icon(UI_Element):
             self.image:Texture|Image = cached_UI_tex_load(self.window_manager.renderer, surf, Icon, None)
         else:
             self.image:Texture|Image = cached_UI_tex_load(self.window_manager.renderer, surf, Icon, (self.default_bg, self.size, self.image_path, self.project_path))
-        
-    def handle_int_action(self):
-        if self.action == 0:
-            run_project(self.window_manager)
 
 def create_Text_Box(window_m:Window_Manager, pos:vec2, size:vec2|None=None, bg_color:vec3=vec3(50), text_color:vec3=vec3(255), text:str="", font:str="Comic Sans", font_size:int=18, action:list|int|None=None, user_creation=True, **kwargs):
     text_box = Text_Box(window_m, pos, size, bg_color, text_color, text, font, font_size, action, **kwargs)

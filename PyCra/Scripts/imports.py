@@ -388,6 +388,23 @@ def relative_format_paths(target_directory: str, format:str=".py"):
 
     return relative_paths
 
+def sort_files_by_modification_date(directory:str, last_updated_first=True):
+    entries = [entry for entry in os.scandir(directory) if entry.is_file()]
+    return sorted(entries, key=lambda entry: entry.stat().st_mtime, reverse=last_updated_first)
+
+def get_latest_file_time(folder):
+    latest_time = 0
+    for entry in os.scandir(folder.path):
+        if entry.is_file():
+            latest_time = max(latest_time, entry.stat().st_mtime)
+        elif entry.is_dir():  # If it's a subfolder, recursively check inside it
+            latest_time = max(latest_time, get_latest_file_time(entry))
+    return latest_time
+
+def sort_folders_by_modification_date(directory:str, last_updated_first=True):
+    entries = [entry for entry in os.scandir(directory) if entry.is_dir()]
+    return sorted(entries, key=get_latest_file_time, reverse=last_updated_first)
+
 from objects import save_new_scene, save_scene, load_scene, create_Game_Object, create_Dynamic_Object
 
 def create_project(name:str):
@@ -449,9 +466,8 @@ def load_project(window_m:Window_Manager):
         scenes_path = "Scenes"
     else:
         scenes_path = f"Projects\\{get_global("<Project_Opened>").value}\\Scenes"
-    scenes = [entry for entry in os.scandir(scenes_path) if entry.is_file()]
-    # sort scenes by modification time (first to last)
-    scenes = sorted(scenes, key=lambda entry: entry.stat().st_mtime, reverse=True)
+
+    scenes = sort_files_by_modification_date(scenes_path)
 
     scene_names = [os.path.splitext(os.path.splitext(entry.name)[0])[0] for entry in scenes]
 

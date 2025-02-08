@@ -225,7 +225,7 @@ class DynamicTextureObject(DynamicObject):
 
 SCENES:list[list[GameObject]] = [] # no scenes
 set_global("<SCENES>", SCENES)
-SCENE_NAMES:list[list[GameObject]] = [[]] # no scene names
+SCENE_NAMES:list[str] = [] # no scene names
 set_global("<Scene_Names>", SCENE_NAMES)
 SCENE = Variable(0)
 set_global("<Scene>", SCENE)

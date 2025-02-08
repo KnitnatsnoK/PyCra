@@ -13,24 +13,25 @@ main_window, main_window_manager = create_window("PyCra Engine -- beta", WINDOW_
 main_window_name = set_global("<main_window_name>", main_window.title)
 
 set_global("main_window_manager", main_window_manager)
-test_project_name = "Test Project"
+
+test_project_name = sort_folders_by_modification_date("Projects\\")[0].name
 create_project(test_project_name)
 open_project(main_window_manager, folder_path=f"Projects\\{test_project_name}")
 
 for jm in joystick_managers:
     window_to_top(jm.window_manager.window)
 
-create_Rect_Outline(main_window_manager, ALL_WINDOW_MANAGERS[0].window_size/2, vec2(200, 100), vec3(0, 0, 255), width=4, action=0, center=True)
+create_Rect_Outline(main_window_manager, ALL_WINDOW_MANAGERS[0].window_size/2, vec2(200, 100), vec3(0, 0, 255), width=4, action=DEFAULT_ACTION, center=True)
 
-create_toolbar(main_window_manager, vec2(0), [Text_Box(main_window_manager, vec2(0), text_color=vec3(225), text="Project", font_size=16, action=[   Text_Box(main_window_manager, vec2(0), text_color=vec3(225), text="Open", font_size=16, action=1),
-                                                                                                                                                    Text_Box(main_window_manager, vec2(0), text_color=vec3(225), text="Save", font_size=16, action=2),
-                                                                                                                                                    Text_Box(main_window_manager, vec2(0), text_color=vec3(225), text="Create", font_size=16, action=3),
+create_toolbar(main_window_manager, vec2(0), [Text_Box(main_window_manager, vec2(0), text_color=vec3(225), text="Project", font_size=16, action=[   Text_Box(main_window_manager, vec2(0), text_color=vec3(225), text="Open", font_size=16, action=OPEN_PROJECT),
+                                                                                                                                                    Text_Box(main_window_manager, vec2(0), text_color=vec3(225), text="Create", font_size=16, action=CREATE_PROJECT),
                                                                                                                                                     ]),
-                                              Text_Box(main_window_manager, vec2(0), text_color=vec3(225), text="Quit", font_size=16, action=0),
-                                              Icon(main_window_manager, vec2(0), vec2(31), default_bg=True, image_path="run_button.png", action=0),
+                                              Text_Box(main_window_manager, vec2(0), text_color=vec3(225), text="Quit", font_size=16, action=QUIT_ENGINE),
+                                              Icon(main_window_manager, vec2(0), vec2(31), default_bg=True, image_path="run_button.png", action=RUN_PROJECT),
                                               Text_Box(main_window_manager, vec2(0), text_color=vec3(225), text=set_global("<Game Objects>", f"Game Objects: {len(SCENES[SCENE.value])}"), font_size=16),
-                                              Text_Box(main_window_manager, vec2(0), text_color=vec3(225), text=set_global("<Loaded Scene>", f"Scene: {SCENE.value+1}/{len(SCENES)}"), font_size=16, action=[   Text_Box(main_window_manager, vec2(0), text_color=vec3(225), text="Next Scene", font_size=16, action=4),
-                                                                                                                                                                                                                Text_Box(main_window_manager, vec2(0), text_color=vec3(225), text="Create Scene", font_size=16, action=5),
+                                              Text_Box(main_window_manager, vec2(0), text_color=vec3(225), text=set_global("<Loaded Scene>", f"Scene: {SCENE.value+1}/{len(SCENES)}"), font_size=16, action=[   Text_Box(main_window_manager, vec2(0), text_color=vec3(225), text="Next Scene", font_size=16, action=CHANGE_NEXT_SCENE),
+                                                                                                                                                                                                                Text_Box(main_window_manager, vec2(0), text_color=vec3(225), text="Create Scene", font_size=16, action=CREATE_SCENE),
+                                                                                                                                                                                                                Text_Box(main_window_manager, vec2(0), text_color=vec3(225), text="Save", font_size=16, action=SAVE_SCENE),
                                                                                                                                                                                                                 ]),
                                               ], user_creation=False)
 
