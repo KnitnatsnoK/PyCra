@@ -11,6 +11,7 @@ It provides a simple yet powerful framework for creating 2D games programmatical
 - Event handling and input management (mouse, keyboard, controllers)
 - Simple physics and collision detection
 - GUI support for in-game interfaces (text boxes, pop-ups, scroll wheels, ...)
+- Does NOT support built-in multi-threading yet
 
 ## Installation
 To install Pycra, clone the repository and run setup.py to install all dependencies:
