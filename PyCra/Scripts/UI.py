@@ -85,7 +85,7 @@ class UI_Element:
             
             set_global("<Loaded Scene>", f"Scene: {get_global("<Scene>").value+1}/{len(get_global("<SCENES>").value)}")
         elif self.action == SAVE_SCENE:
-            save_scene(SCENE.value, LAYERS[SCENE.value], path=f"Projects\\{get_global("<Project_Opened>").value}\\Scenes\\", name=SCENE_NAMES[SCENE.value])
+            save_scene(SCENE.value, LAYERS[SCENE.value], path=f'Projects\\{get_global("<Project_Opened>").value}\\Scenes\\', name=SCENE_NAMES[SCENE.value])
             print(f"Saved {SCENE_NAMES[SCENE.value]}")
         elif self.action == CREATE_SCENE:
             scene_name = input("Enter a scene name: ")
@@ -93,7 +93,7 @@ class UI_Element:
                 new_scene_index = len(get_global("<SCENES>").value)
                 new_scene = []
                 new_layers = ["game_objects"]
-                if save_new_scene(new_scene, new_layers, f"Projects\\{get_global("<Project_Opened>").value}\\Scenes\\", scene_name):
+                if save_new_scene(new_scene, new_layers, f'Projects\\{get_global("<Project_Opened>").value}\\Scenes\\', scene_name):
                     get_global("<SCENES>").value.append(new_scene)
                     get_global("<Scene_Names>").value.append(scene_name)
                     get_global("<LAYERS>").value.append(new_layers)

@@ -91,7 +91,7 @@ def handle_keymouse_input():
             if KEYS.down[pg.K_r]:
                 reload_project_dependend_assets(main_window_manager)
             if KEYS.down[pg.K_s]:
-                save_scene(SCENE.value, LAYERS[SCENE.value], path=f"Projects\\{get_global("<Project_Opened>").value}\\Scenes\\", name=SCENE_NAMES[SCENE.value])
+                save_scene(SCENE.value, LAYERS[SCENE.value], path=f'Projects\\{get_global("<Project_Opened>").value}\\Scenes\\', name=SCENE_NAMES[SCENE.value])
                 print(f"Saved {SCENE_NAMES[SCENE.value]}")
             if KEYS.down[pg.K_c]:
                 selected_obj:GameObject = get_global("<Selected_Object>").value
