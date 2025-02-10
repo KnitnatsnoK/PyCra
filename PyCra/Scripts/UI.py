@@ -97,7 +97,7 @@ class UI_Element:
                     get_global("<SCENES>").value.append(new_scene)
                     get_global("<Scene_Names>").value.append(scene_name)
                     get_global("<LAYERS>").value.append(new_layers)
-                    load_scene(new_scene_index, f"Projects\\{get_global("<Project_Opened>").value}\\Scenes\\", scene_name)
+                    load_scene(new_scene_index, f'Projects\\{get_global("<Project_Opened>").value}\\Scenes\\', scene_name)
                     set_global("<Scene>", new_scene_index)
 
                     set_global("<Loaded Scene>", f"Scene: {get_global("<Scene>").value+1}/{len(get_global("<SCENES>").value)}")

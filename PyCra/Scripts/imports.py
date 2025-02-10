@@ -472,7 +472,7 @@ def load_project(window_m:Window_Manager):
     if RUN_BY_PROJECT:
         scenes_path = "Scenes"
     else:
-        scenes_path = f"Projects\\{get_global("<Project_Opened>").value}\\Scenes"
+        scenes_path = f'Projects\\{get_global("<Project_Opened>").value}\\Scenes'
 
     scenes = sort_files_by_modification_date(scenes_path)
     scene_names = [os.path.splitext(os.path.splitext(entry.name)[0])[0] for entry in scenes]
@@ -521,7 +521,7 @@ def open_project(window_m:Window_Manager, initial_directory:str|None=None, folde
     print(f"Opened Project '{get_global("<Project_Opened>").value}'")
 
     # reassign tick-function in main.py
-    file_path = os.path.join(os.getcwd(), f"Projects\\{get_global("<Project_Opened>").value}", "Scripts", "main.py")
+    file_path = os.path.join(os.getcwd(), f'Projects\\{get_global("<Project_Opened>").value}', "Scripts", "main.py")
     spec = importlib.util.spec_from_file_location("main", file_path)
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
@@ -540,7 +540,7 @@ def run_project(window_m:Window_Manager):
 
     # run project here
     start_time = perf_counter()
-    run_script(window_m, f"Projects\\{get_global("<Project_Opened>").value}\\Scripts\\game_handler.py")
+    run_script(window_m, f'Projects\\{get_global("<Project_Opened>").value}\\Scripts\\game_handler.py')
 
     print(f"\nFinished running '{get_global("<Project_Opened>").value}' with {perf_counter()-start_time:2f}s runtime")
 
