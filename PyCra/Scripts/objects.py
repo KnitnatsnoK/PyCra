@@ -4,10 +4,10 @@ from imports import MOUSE, KEYS, center, random_vec2, random_vec3, pointing_amou
 
 class GameObject:
     G = G
-    def __init__(self, window_manager:Window_Manager, scene:int, pos:vec2, size:vec2, user_creation=True, physics_obj:bool=True, solid:bool=True, mass:float=inf, **kwargs):
+    def __init__(self, window_manager:Window_Manager, scene:int, layer:int|str, pos:vec2, size:vec2, user_creation=True, physics_obj:bool=True, solid:bool=True, mass:float=inf, **kwargs):
         # parameters for saving
         self.engine_generated = not user_creation
-        self.parameters = [type(self), ALL_WINDOW_MANAGERS.index(window_manager), kwargs, copy(pos), copy(size), user_creation, physics_obj, (solid,)]
+        self.parameters = [type(self), ALL_WINDOW_MANAGERS.index(window_manager), kwargs, layer, copy(pos), copy(size), user_creation, physics_obj, (solid,)]
         
         # parameters
         self.id = id(self)
@@ -16,6 +16,7 @@ class GameObject:
             self.project_dependend = False
 
         self.scene = scene
+        self.layer = layer
         self.window_manager = ALL_WINDOW_MANAGERS[window_manager] if isinstance(window_manager, int) else window_manager
 
         self.static = True
@@ -72,14 +73,14 @@ class GameObject:
         self.pos = center(copy(pos), self.size, **self.parameters[2])
 
 class DynamicObject(GameObject):
-    def __init__(self, window_manager:Window_Manager, scene:int, pos:vec2, size:vec2, user_creation=True, physics_obj:bool=True, mass:float=None, e:float=0, **kwargs):
+    def __init__(self, window_manager:Window_Manager, scene:int, layer:int|str, pos:vec2, size:vec2, user_creation=True, physics_obj:bool=True, mass:float=None, e:float=0, **kwargs):
         if not isinstance(self, DynamicTextureObject):
             self.color = random_vec3(0, 255)
         mass = mass if mass is not None else size.x * size.y / 1000
         
         window_manager = ALL_WINDOW_MANAGERS[window_manager] if isinstance(window_manager, int) else window_manager
-        super().__init__(window_manager, scene, pos, size, user_creation, physics_obj, False, mass, **kwargs)
-        self.parameters = [type(self), ALL_WINDOW_MANAGERS.index(window_manager), kwargs, copy(pos), copy(size), user_creation, physics_obj, (mass, e)]
+        super().__init__(window_manager, scene, layer, pos, size, user_creation, physics_obj, False, mass, **kwargs)
+        self.parameters = [type(self), ALL_WINDOW_MANAGERS.index(window_manager), kwargs, layer, copy(pos), copy(size), user_creation, physics_obj, (mass, e)]
 
         self.static = False
         self.acc = vec2(0)
@@ -128,15 +129,15 @@ class DynamicObject(GameObject):
         self.center = self.pos + self.size*0.5
 
 class TextureObject(GameObject):
-    def __init__(self, window_manager:Window_Manager, scene:int, pos:vec2, size:vec2, user_creation=True, image_path:str="PyCra Icon.jpg", project_path:bool=True, **kwargs):
+    def __init__(self, window_manager:Window_Manager, scene:int, layer:int|str, pos:vec2, size:vec2, user_creation=True, image_path:str="PyCra Icon.jpg", project_path:bool=True, **kwargs):
         self.image_path = image_path
         self.project_dependend = project_path
 
         size = size * vec2(try_loading_image(image_path, self.project_dependend)[0].size) if isinstance(size, int) else (vec2(try_loading_image(image_path, self.project_dependend)[0].size) if size is None else size)
 
         window_manager = ALL_WINDOW_MANAGERS[window_manager] if isinstance(window_manager, int) else window_manager
-        super().__init__(window_manager, scene, pos, size, user_creation, False, **kwargs)
-        self.parameters = [type(self), ALL_WINDOW_MANAGERS.index(window_manager), kwargs, copy(pos), copy(size), user_creation, False, (image_path, project_path)]
+        super().__init__(window_manager, scene, layer, pos, size, user_creation, False, **kwargs)
+        self.parameters = [type(self), ALL_WINDOW_MANAGERS.index(window_manager), kwargs, layer, copy(pos), copy(size), user_creation, False, (image_path, project_path)]
 
     def update_image(self):
         if get_placeholder_status(TextureObject, get_global("<Project_Opened>").value, (self.image_path, self.project_dependend)):
@@ -159,7 +160,7 @@ class TextureObject(GameObject):
         return self.pos
 
 class BackgroundObject(TextureObject):
-    def __init__(self, window_manager:Window_Manager, scene:int, pos:vec2, size:vec2, user_creation=True, depth:float=0, x_axis:bool=True, y_axis:bool=True, image_path:str="PyCra Icon.jpg", project_path:bool=True, **kwargs):
+    def __init__(self, window_manager:Window_Manager, scene:int, layer:int|str, pos:vec2, size:vec2, user_creation=True, depth:float=0, x_axis:bool=True, y_axis:bool=True, image_path:str="PyCra Icon.jpg", project_path:bool=True, **kwargs):
         self.project_dependend = project_path
         self.depth = depth
         self.x_axis = x_axis
@@ -168,8 +169,8 @@ class BackgroundObject(TextureObject):
         size = size * vec2(try_loading_image(image_path, self.project_dependend)[0].size) if isinstance(size, int) else (vec2(try_loading_image(image_path, self.project_dependend)[0].size) if size is None else size)
         
         window_manager = ALL_WINDOW_MANAGERS[window_manager] if isinstance(window_manager, int) else window_manager
-        super().__init__(window_manager, scene, pos, size, user_creation, image_path, project_path, **kwargs)
-        self.parameters = [type(self), ALL_WINDOW_MANAGERS.index(window_manager), kwargs, copy(pos), copy(size), user_creation, False, (depth, x_axis, y_axis, image_path, project_path)]
+        super().__init__(window_manager, scene, layer, pos, size, user_creation, image_path, project_path, **kwargs)
+        self.parameters = [type(self), ALL_WINDOW_MANAGERS.index(window_manager), kwargs, layer, copy(pos), copy(size), user_creation, False, (depth, x_axis, y_axis, image_path, project_path)]
 
     def draw(self):
         window_pos = self.get_window_pos()
@@ -196,15 +197,15 @@ class BackgroundObject(TextureObject):
         return self.pos - vec2(cam_pos.x*self.x_axis, cam_pos.y*self.y_axis)
 
 class DynamicTextureObject(DynamicObject):
-    def __init__(self, window_manager:Window_Manager, scene:int, pos:vec2, size:vec2, user_creation=True, physics_obj:bool=True, mass:float=None, e:float=0, image_path:str="PyCra Icon.jpg", project_path:bool=True, **kwargs):
+    def __init__(self, window_manager:Window_Manager, scene:int, layer:int|str, pos:vec2, size:vec2, user_creation=True, physics_obj:bool=True, mass:float=None, e:float=0, image_path:str="PyCra Icon.jpg", project_path:bool=True, **kwargs):
         self.image_path = image_path
         self.project_dependend = project_path
 
         size = size * vec2(try_loading_image(self.image_path, self.project_dependend)[0].size) if isinstance(size, int) else (vec2(try_loading_image(self.image_path, self.project_dependend)[0].size) if size is None else size)
 
         window_manager = ALL_WINDOW_MANAGERS[window_manager] if isinstance(window_manager, int) else window_manager
-        super().__init__(window_manager, scene, pos, size, user_creation, physics_obj, mass, e, **kwargs)
-        self.parameters = [type(self), ALL_WINDOW_MANAGERS.index(window_manager), kwargs, copy(pos), copy(size), user_creation, physics_obj, (mass, e, image_path, project_path)]
+        super().__init__(window_manager, scene, layer, pos, size, user_creation, physics_obj, mass, e, **kwargs)
+        self.parameters = [type(self), ALL_WINDOW_MANAGERS.index(window_manager), kwargs, layer, copy(pos), copy(size), user_creation, physics_obj, (mass, e, image_path, project_path)]
 
     def update_image(self):
         if get_placeholder_status(DynamicTextureObject, get_global("<Project_Opened>").value, (self.image_path, self.project_dependend)):
@@ -230,6 +231,18 @@ set_global("<Scene_Names>", SCENE_NAMES)
 SCENE = Variable(0)
 set_global("<Scene>", SCENE)
 
+LAYERS:list[list[str]] = [] # no layers
+set_global("<LAYERS>", LAYERS)
+
+def add_layer(layer_name:str, scene:int=None, index=None):
+    layer_scene = scene if isinstance(scene, int) else SCENE.value
+    if layer_name in LAYERS[layer_scene]:
+        return
+    if index is None:
+        LAYERS[layer_scene].append(layer_name)
+        return
+    LAYERS[layer_scene].insert(index, layer_name)
+
 def change_to_scene(scene:int|str, engine_change=False):
     if engine_change or RUN_BY_PROJECT:
         SCENE.value = scene if isinstance(scene, int) else SCENE_NAMES.index(scene)
@@ -237,47 +250,66 @@ def change_to_scene(scene:int|str, engine_change=False):
 def get_valid_scene(scene:int|str|None):
     return scene if isinstance(scene, int) else (SCENE.value if scene is None else SCENE_NAMES.index(scene))
 
-def create_Game_Object(scene:int|str|None, window_manager:int, pos:vec2, size:vec2, user_creation=True, physics_obj:bool=True, **kwargs):
-    obj_scene = get_valid_scene(scene)
-    game_object = GameObject(window_manager, obj_scene, pos, size, user_creation, physics_obj, **kwargs)
-    if scene is not None:
+def get_valid_layer(scene:int, layer:str|int):
+    return layer if isinstance(layer, int) else LAYERS[scene].index(layer)
+
+set_global("<Last_Added_Game_Object>", None)
+def add_game_object_to_scene(obj_scene:int, game_object:GameObject):
+    set_global("<Last_Added_Game_Object>", game_object)
+    if len(SCENES[obj_scene]) == 0:
         SCENES[obj_scene].append(game_object)
+        return
+    
+    game_object_layer = get_valid_layer(obj_scene, game_object.layer)
+    for i, game_obj in enumerate(SCENES[obj_scene]):
+        if i == len(SCENES[obj_scene])-1:
+            SCENES[obj_scene].insert(len(SCENES[obj_scene]), game_object)
+            return
+        elif get_valid_layer(game_obj.scene, game_obj.layer) == game_object_layer + 1:
+            SCENES[obj_scene].insert(i, game_object)
+            return
+
+def create_Game_Object(scene:int|str|None, layer:int|str, window_manager:int, pos:vec2, size:vec2, user_creation=True, physics_obj:bool=True, **kwargs):
+    obj_scene = get_valid_scene(scene)
+    game_object = GameObject(window_manager, obj_scene, layer, pos, size, user_creation, physics_obj, **kwargs)
+    if scene is not None:
+        add_game_object_to_scene(obj_scene, game_object)
     return game_object
 
-def create_Dynamic_Object(scene:int|str|None, window_manager:int, pos:vec2, size:vec2, mass:float=None, e:float=0, user_creation=True, physics_obj:bool=True, **kwargs):
+def create_Dynamic_Object(scene:int|str|None, layer:int|str, window_manager:int, pos:vec2, size:vec2, mass:float=None, e:float=0, user_creation=True, physics_obj:bool=True, **kwargs):
     obj_scene = get_valid_scene(scene)
-    dynamic_object = DynamicObject(window_manager, obj_scene, pos, size, user_creation, physics_obj, mass, e, **kwargs)
+    dynamic_object = DynamicObject(window_manager, obj_scene, layer, pos, size, user_creation, physics_obj, mass, e, **kwargs)
     if scene is not None:
-        SCENES[obj_scene].append(dynamic_object)
+        add_game_object_to_scene(obj_scene, dynamic_object)
     return dynamic_object
 
-def create_Texture_Object(scene:int|str|None, window_manager:int, pos:vec2, size:vec2, image_path:str="PyCra Icon.jpg", project_path:bool=True, user_creation=True, **kwargs):
+def create_Texture_Object(scene:int|str|None, layer:int|str, window_manager:int, pos:vec2, size:vec2, image_path:str="PyCra Icon.jpg", project_path:bool=True, user_creation=True, **kwargs):
     obj_scene = get_valid_scene(scene)
-    texture_object = TextureObject(window_manager, obj_scene, pos, size, user_creation, image_path, project_path, **kwargs)
+    texture_object = TextureObject(window_manager, obj_scene, layer, pos, size, user_creation, image_path, project_path, **kwargs)
     if scene is not None:
-        SCENES[obj_scene].insert(0, texture_object)
+        add_game_object_to_scene(obj_scene, texture_object)
     return texture_object
 
-def create_Background_Object(scene:int|str|None, window_manager:int, pos:vec2, size:vec2, depth:float=0, x_axis:bool=True, y_axis:bool=True, image_path:str="PyCra Icon.jpg", project_path:bool=True, user_creation=True, **kwargs):
+def create_Background_Object(scene:int|str|None, layer:int|str, window_manager:int, pos:vec2, size:vec2, depth:float=0, x_axis:bool=True, y_axis:bool=True, image_path:str="PyCra Icon.jpg", project_path:bool=True, user_creation=True, **kwargs):
     obj_scene = get_valid_scene(scene)
-    background_object = BackgroundObject(window_manager, obj_scene, pos, size, user_creation, depth, x_axis, y_axis, image_path, project_path, **kwargs)
+    background_object = BackgroundObject(window_manager, obj_scene, layer, pos, size, user_creation, depth, x_axis, y_axis, image_path, project_path, **kwargs)
     if scene is not None:
-        SCENES[obj_scene].insert(0, background_object)
+        add_game_object_to_scene(obj_scene, background_object)
     return background_object
 
-def create_Dynamic_Texture_Object(scene:int|str|None, window_manager:int, pos:vec2, size:vec2, mass:float=None, e:float=0, image_path:str="PyCra Icon.jpg", project_path:bool=True, user_creation=True, physics_obj:bool=True, **kwargs):
+def create_Dynamic_Texture_Object(scene:int|str|None, layer:int|str, window_manager:int, pos:vec2, size:vec2, mass:float=None, e:float=0, image_path:str="PyCra Icon.jpg", project_path:bool=True, user_creation=True, physics_obj:bool=True, **kwargs):
     obj_scene = get_valid_scene(scene)
-    dynamic_texture_object = DynamicTextureObject(window_manager, obj_scene, pos, size, user_creation, physics_obj, mass, e, image_path, project_path, **kwargs)
+    dynamic_texture_object = DynamicTextureObject(window_manager, obj_scene, layer, pos, size, user_creation, physics_obj, mass, e, image_path, project_path, **kwargs)
     if scene is not None:
-        SCENES[obj_scene].append(dynamic_texture_object)
+        add_game_object_to_scene(obj_scene, dynamic_texture_object)
     return dynamic_texture_object
 
 def create_Object_from_parameters(parameters:tuple, scene:int|str|None) -> GameObject:
     obj_scene = get_valid_scene(scene)
-    GameObjectClass, Window_Manager_index, kwargs, pos, size, user_creation, physics_obj, parameters = parameters
-    game_object = GameObjectClass(ALL_WINDOW_MANAGERS[Window_Manager_index], obj_scene, pos, size, user_creation, physics_obj, *parameters, **kwargs)
+    GameObjectClass, Window_Manager_index, kwargs, layer, pos, size, user_creation, physics_obj, parameters = parameters
+    game_object = GameObjectClass(ALL_WINDOW_MANAGERS[Window_Manager_index], obj_scene, layer, pos, size, user_creation, physics_obj, *parameters, **kwargs)
     if obj_scene is not None:
-        SCENES[obj_scene].append(game_object)
+        add_game_object_to_scene(obj_scene, game_object)
     return game_object
 
 def sweep_and_prune_x(obj_list:list[GameObject]):
@@ -424,11 +456,11 @@ def tick_game_objects(fps_factor:float, update=True):
     global SELECTED_OBJ
     if MOUSE.down_buttons[0] and KEYS.check_pressed(pg.K_SPACE) and ALL_WINDOW_MANAGERS[0].last_action_element is None:
         if not KEYS.check_pressed(pg.K_LSHIFT):
-            create_Dynamic_Texture_Object(SCENE.value, ALL_WINDOW_MANAGERS[0], copy(MOUSE.scene_position), vec2(40), image_path="bird1.png", user_creation=False, center=True)
+            create_Dynamic_Texture_Object(SCENE.value, "game_objects", ALL_WINDOW_MANAGERS[0], copy(MOUSE.scene_position), vec2(40), image_path="bird1.png", user_creation=False, center=True)
         else:
             for _ in range(5):
-                create_Dynamic_Object(SCENE.value, ALL_WINDOW_MANAGERS[0], copy(MOUSE.scene_position+random_vec2(-100, 100)), vec2(30), user_creation=False, center=True)
-        SELECTED_OBJ.value = SCENES[SCENE.value][-1]
+                create_Dynamic_Object(SCENE.value, "game_objects", ALL_WINDOW_MANAGERS[0], copy(MOUSE.scene_position+random_vec2(-100, 100)), vec2(30), user_creation=False, center=True)
+        SELECTED_OBJ.value = get_global("<Last_Added_Game_Object>").value
 
         set_global("<Game Objects>", f"Game Objects: {len(SCENES[SCENE.value])}")
 
@@ -471,7 +503,7 @@ def tick_game_objects(fps_factor:float, update=True):
                     set_global("<Selected_Object>", game_object)
         game_object.draw()
 
-def save_new_scene(scene:int|list[GameObject], path:str, name:str):
+def save_new_scene(scene:int|list[GameObject], layers:None|list[str], path:str, name:str):
     scene_path = path + name + ".pkl.gz"
     if os.path.exists(scene_path):
         if PRINT_ASSET_EXISTENCE:
@@ -480,20 +512,24 @@ def save_new_scene(scene:int|list[GameObject], path:str, name:str):
     else:
         if isinstance(scene, int):
             game_objects = SCENES[scene]
+            layers = LAYERS[scene]
         else:
             game_objects = scene
+            layers = layers
         with gzip.open(scene_path, 'wb') as file:
-            pickle.dump([game_object.parameters for game_object in game_objects if game_object.engine_generated], file)
+            pickle.dump((layers, [game_object.parameters for game_object in game_objects if game_object.engine_generated]), file)
         return True
 
-def save_scene(scene:int|list[GameObject], path:str, name:str):
+def save_scene(scene:int|list[GameObject], layers:None|list[str], path:str, name:str):
     scene_path = path + name + ".pkl.gz"
     if isinstance(scene, int):
         game_objects = SCENES[scene]
+        layers = LAYERS[scene]
     else:
         game_objects = scene
+        layers = layers
     with gzip.open(scene_path, 'wb') as file:
-        pickle.dump([game_object.parameters for game_object in game_objects if game_object.engine_generated], file)
+        pickle.dump((layers, [game_object.parameters for game_object in game_objects if game_object.engine_generated]), file)
 
 def load_scene(scene:int, path:str, name:str):
     saved_time = perf_counter()
@@ -502,11 +538,13 @@ def load_scene(scene:int, path:str, name:str):
         while len(SCENES) <= scene:
             SCENES.append([])
             SCENE_NAMES.append("")
+            LAYERS.append([])
         set_global("<Loaded Scene>", f"Scene: {SCENE.value+1}/{len(SCENES)}")
         
-        SCENES[scene] = [create_Object_from_parameters(parameters, scene=scene) for parameters in pickle.load(file)]
+        loaded_file = pickle.load(file)
+        LAYERS[scene] = loaded_file[0]
+        SCENES[scene] = [create_Object_from_parameters(parameters, scene=scene) for parameters in loaded_file[1]]
         SCENE_NAMES[scene] = name
-        #print(SCENES[scene])
 
     set_global("<Game Objects>", f"Game Objects: {len(SCENES[scene])}")
 

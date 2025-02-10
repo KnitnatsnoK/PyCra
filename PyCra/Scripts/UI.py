@@ -1,7 +1,7 @@
 from value_assets import *
 from window_manager import Window_Manager, center_vec2, quit_engine
 from imports import KEYS, MOUSE, render_text, load_image, random_vec3, create_project, open_project, run_project, center, create_surface, create_boundary
-from objects import SCENES, SCENE_NAMES, SCENE, save_scene, save_new_scene, load_scene
+from objects import SCENES, SCENE_NAMES, SCENE, LAYERS, save_scene, save_new_scene, load_scene
 
 class UI_Element:
     def __init__(self, window_manager:Window_Manager, pos:vec2, size:vec2|None, action:list|int|None=None):
@@ -76,6 +76,7 @@ class UI_Element:
             project_name = input("Enter a project name: ")
             if project_name != "":
                 create_project(project_name)
+                open_project(self.window_manager, folder_path=f"Projects\\{project_name}")
             else:
                 print("No project was created")
         elif self.action == CHANGE_NEXT_SCENE:
@@ -84,16 +85,18 @@ class UI_Element:
             
             set_global("<Loaded Scene>", f"Scene: {get_global("<Scene>").value+1}/{len(get_global("<SCENES>").value)}")
         elif self.action == SAVE_SCENE:
-            save_scene(SCENES[SCENE.value], f"Projects\\{get_global("<Project_Opened>").value}\\Scenes\\", SCENE_NAMES[SCENE.value])
+            save_scene(SCENE.value, LAYERS[SCENE.value], path=f"Projects\\{get_global("<Project_Opened>").value}\\Scenes\\", name=SCENE_NAMES[SCENE.value])
             print(f"Saved {SCENE_NAMES[SCENE.value]}")
         elif self.action == CREATE_SCENE:
             scene_name = input("Enter a scene name: ")
             if scene_name != "":
                 new_scene_index = len(get_global("<SCENES>").value)
                 new_scene = []
-                if save_new_scene(new_scene, f"Projects\\{get_global("<Project_Opened>").value}\\Scenes\\", scene_name):
+                new_layers = ["game_objects"]
+                if save_new_scene(new_scene, new_layers, f"Projects\\{get_global("<Project_Opened>").value}\\Scenes\\", scene_name):
                     get_global("<SCENES>").value.append(new_scene)
                     get_global("<Scene_Names>").value.append(scene_name)
+                    get_global("<LAYERS>").value.append(new_layers)
                     load_scene(new_scene_index, f"Projects\\{get_global("<Project_Opened>").value}\\Scenes\\", scene_name)
                     set_global("<Scene>", new_scene_index)
 

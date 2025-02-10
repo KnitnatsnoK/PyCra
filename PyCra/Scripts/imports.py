@@ -244,6 +244,12 @@ def try_loading_image(image_path:str, project_dependend:bool, size:vec2=None) ->
     
     return surf, placeholder
 
+def surf_screenshot(window_manager:Window_Manager):
+	return window_manager.renderer.to_surface()
+
+def texture_screenshot(window_manager:Window_Manager):
+	return Texture.from_surface(window_manager.renderer, surf_screenshot(window_manager))
+
 # center functions
 def center(pos:vec2, size:vec2, **kwargs) -> vec2:
     if "center" in kwargs and kwargs["center"]:
@@ -253,17 +259,17 @@ def center(pos:vec2, size:vec2, **kwargs) -> vec2:
     elif "right" in kwargs and kwargs["right"]:
         pos += vec2(-size.x, -size.y/2)
     elif "bottom" in kwargs and kwargs["bottom"]:
-        pos += vec2(-size.x/2, 0)
-    elif "bottomleft" in kwargs and kwargs["bottomleft"]:
-        pos += vec2(-size.x, 0)
-    elif "bottomright" in kwargs and kwargs["bottomright"]:
-        pos += vec2(0, 0)
-    elif "top" in kwargs and kwargs["top"]:
         pos += vec2(-size.x/2, -size.y)
-    elif "topleft" in kwargs and kwargs["topleft"]:
-        pos += vec2(-size.x, -size.y)
-    elif "topright" in kwargs and kwargs["topright"]:
+    elif "bottomleft" in kwargs and kwargs["bottomleft"]:
         pos += vec2(0, -size.y)
+    elif "bottomright" in kwargs and kwargs["bottomright"]:
+        pos += vec2(-size.x, -size.y)
+    elif "top" in kwargs and kwargs["top"]:
+        pos += vec2(-size.x/2, 0)
+    elif "topleft" in kwargs and kwargs["topleft"]:
+        pos += vec2(0, 0)
+    elif "topright" in kwargs and kwargs["topright"]:
+        pos += vec2(-size.x, 0)
 
     return pos
 
@@ -435,11 +441,12 @@ def create_project(name:str):
 
     # Scenes
     main_window_manager = ALL_WINDOW_MANAGERS[0]
-    example_scene = [create_Game_Object(None, main_window_manager, vec2(480, 465), vec2(500, 50), user_creation=False, center=True),
-                     create_Dynamic_Object(None, main_window_manager, vec2(480, 15), vec2(30), user_creation=False, center=True),
+    example_scene = [create_Game_Object(None, "game_objects", main_window_manager, vec2(480, 465), vec2(500, 50), user_creation=False, center=True),
+                     create_Dynamic_Object(None, "game_objects", main_window_manager, vec2(480, 15), vec2(30), user_creation=False, center=True),
                      ]
+    example_layers = ["game_objects"]
 
-    save_new_scene(example_scene, f"Projects\\{name}\\Scenes\\", "test_scene")
+    save_new_scene(example_scene, example_layers, f"Projects\\{name}\\Scenes\\", "test_scene")
     
     print(f"Finished creating project {name}")
 
@@ -468,8 +475,12 @@ def load_project(window_m:Window_Manager):
         scenes_path = f"Projects\\{get_global("<Project_Opened>").value}\\Scenes"
 
     scenes = sort_files_by_modification_date(scenes_path)
-
     scene_names = [os.path.splitext(os.path.splitext(entry.name)[0])[0] for entry in scenes]
+
+    get_global("<SCENES>").value.clear()
+    get_global("<Scene_Names>").value.clear()
+    get_global("<Scene>").value = 0
+    get_global("<LAYERS>").value.clear()
 
     for i, scene_name in enumerate(scene_names):
         load_scene(i, scenes_path + "\\", scene_name)
