@@ -235,7 +235,7 @@ def try_loading_image(image_path:str, project_dependend:bool, size:vec2=None) ->
             if RUN_BY_PROJECT:
                 surf = load_image(f"Assets\\{image_path}", size)
             else:
-                surf = load_image(f"Projects\\{get_global("<Project_Opened>").value}\\Assets\\{image_path}", size)
+                surf = load_image(f'Projects\\{get_global("<Project_Opened>").value}\\Assets\\{image_path}', size)
         else:
             surf = load_image(f"Assets\\{image_path}", size)
     except FileNotFoundError:

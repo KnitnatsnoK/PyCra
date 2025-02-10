@@ -321,12 +321,12 @@ class Icon(UI_Element):
             if self.default_bg:
                 surf = create_boundary(vec3(50), self.size, vec2(4))
                 if self.project_path:
-                    surf.blit(load_image(f"Projects\\{get_global("<Project_Opened>").value}\\Assets\\{self.image_path}", self.size))
+                    surf.blit(load_image(f'Projects\\{get_global("<Project_Opened>").value}\\Assets\\{self.image_path}', self.size))
                 else:
                     surf.blit(load_image(f"Assets\\{self.image_path}", self.size))
             else:
                 if self.project_path:
-                    surf = load_image(f"Projects\\{get_global("<Project_Opened>").value}\\Assets\\{self.image_path}", self.size)
+                    surf = load_image(f'Projects\\{get_global("<Project_Opened>").value}\\Assets\\{self.image_path}', self.size)
                 else:
                     surf = load_image(f"Assets\\{self.image_path}", self.size)
             
