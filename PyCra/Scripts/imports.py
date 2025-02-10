@@ -513,15 +513,15 @@ def open_project(window_m:Window_Manager, initial_directory:str|None=None, folde
         Raise_Error(window_m, f"Path '{folder_path}' is not a valid project\nFolder/s: {needed_folders} is/are missing")
         return
     
-    folder_name = os.path.basename(folder_path)
-    set_global("<Project_Opened>", folder_name)
+    project_name = os.path.basename(folder_path)
+    set_global("<Project_Opened>", project_name)
 
-    print(f"Opening Project '{get_global("<Project_Opened>").value}'...")
+    print(f"Opening Project '{project_name}'...")
     load_project(window_m)
-    print(f"Opened Project '{get_global("<Project_Opened>").value}'")
+    print(f"Opened Project '{project_name}'")
 
     # reassign tick-function in main.py
-    file_path = os.path.join(os.getcwd(), f'Projects\\{get_global("<Project_Opened>").value}', "Scripts", "main.py")
+    file_path = os.path.join(os.getcwd(), f'Projects\\{project_name}', "Scripts", "main.py")
     spec = importlib.util.spec_from_file_location("main", file_path)
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
@@ -529,20 +529,21 @@ def open_project(window_m:Window_Manager, initial_directory:str|None=None, folde
     set_global("<Update_tick_func>", module.tick)
 
     # test
-    file_path = f"Projects\\{folder_name}\\Scripts\\main.py"
+    file_path = f"Projects\\{project_name}\\Scripts\\main.py"
     open_file(file_path)
 
 def run_project(window_m:Window_Manager):
-    if get_global("<Project_Opened>").value is None:
+    project_opened = get_global("<Project_Opened>").value
+    if project_opened is None:
         Raise_Error(window_m, "No project is currently opened")
         return
-    print(f"Running '{get_global("<Project_Opened>").value}'...\n")
+    print(f"Running '{project_opened}'...\n")
 
     # run project here
     start_time = perf_counter()
-    run_script(window_m, f'Projects\\{get_global("<Project_Opened>").value}\\Scripts\\game_handler.py')
+    run_script(window_m, f'Projects\\{project_opened}\\Scripts\\game_handler.py')
 
-    print(f"\nFinished running '{get_global("<Project_Opened>").value}' with {perf_counter()-start_time:2f}s runtime")
+    print(f"\nFinished running '{project_opened}' with {perf_counter()-start_time:2f}s runtime")
 
 # render functions
 def render_text_line(text:str, font:str=None, font_size:int=18, text_color:vec3=vec3(255)) -> pg.Surface:

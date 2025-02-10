@@ -15,9 +15,12 @@ main_window_name = set_global("<main_window_name>", main_window.title)
 set_global("main_window_manager", main_window_manager)
 
 # Open last modified project
-last_project_name = sort_folders_by_modification_date("Projects\\")[0].name
-create_project(last_project_name)
-open_project(main_window_manager, folder_path=f"Projects\\{last_project_name}")
+create_project("Test Project")
+
+sorted_projects = sort_folders_by_modification_date("Projects\\")
+if len(sorted_projects):
+    last_project_name = sorted_projects[0].name
+    open_project(main_window_manager, folder_path=f"Projects\\{last_project_name}")
 
 for jm in joystick_managers:
     window_to_top(jm.window_manager.window)

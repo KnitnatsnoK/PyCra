@@ -81,9 +81,9 @@ class UI_Element:
                 print("No project was created")
         elif self.action == CHANGE_NEXT_SCENE:
             set_global("<Scene>", (get_global("<Scene>").value + 1)%len(get_global("<SCENES>").value))
-            set_global("<Game Objects>", f"Game Objects: {len(get_global("<SCENES>").value[get_global("<Scene>").value])}")
+            set_global("<Game Objects>", f'Game Objects: {len(get_global("<SCENES>").value[get_global("<Scene>").value])}')
             
-            set_global("<Loaded Scene>", f"Scene: {get_global("<Scene>").value+1}/{len(get_global("<SCENES>").value)}")
+            set_global("<Loaded Scene>", f'Scene: {get_global("<Scene>").value+1}/{len(get_global("<SCENES>").value)}')
         elif self.action == SAVE_SCENE:
             save_scene(SCENE.value, LAYERS[SCENE.value], path=f'Projects\\{get_global("<Project_Opened>").value}\\Scenes\\', name=SCENE_NAMES[SCENE.value])
             print(f"Saved {SCENE_NAMES[SCENE.value]}")
@@ -100,7 +100,7 @@ class UI_Element:
                     load_scene(new_scene_index, f'Projects\\{get_global("<Project_Opened>").value}\\Scenes\\', scene_name)
                     set_global("<Scene>", new_scene_index)
 
-                    set_global("<Loaded Scene>", f"Scene: {get_global("<Scene>").value+1}/{len(get_global("<SCENES>").value)}")
+                    set_global("<Loaded Scene>", f'Scene: {get_global("<Scene>").value+1}/{len(get_global("<SCENES>").value)}')
                 elif not PRINT_ASSET_EXISTENCE:
                     print(f"The scene '{scene_name}' already exists.")
             else:
