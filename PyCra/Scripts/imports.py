@@ -21,7 +21,7 @@ class Camera:
         if self.binded_obj is None:
             return
         if RUN_BY_PROJECT:
-            if self.binded_obj.scene != get_global("<Scene>").value:
+            if self.binded_obj.scene != get_global("<Scene>").value or not get_global("TICK_GAME_OBJECTS").value:
                 return
             offset = self.calculate_offset()
             # only apply changes for axis outside the dead zone
@@ -227,7 +227,7 @@ def random_vec2_max2(min:int, max0:int, max1:int):
 def random_vec2_minmax2(min0:int, min1:int, max0:int, max1:int):
     return vec2(randint(min0, max0), randint(min1, max1))
 
-# surface functions
+# Surface / Texture functions
 def try_loading_image(image_path:str, project_dependend:bool, size:vec2=None) -> tuple[pg.Surface, bool]:
     placeholder = False
     try:
@@ -243,6 +243,36 @@ def try_loading_image(image_path:str, project_dependend:bool, size:vec2=None) ->
         surf = load_image(f"Assets\\Placeholder.png", size)
     
     return surf, placeholder
+
+def fetch_UI_texture(UI_type, wm:Window_Manager, image_path, project_dependend=True):
+    image:Texture|Image = try_UI_tex_cache(UI_type, (image_path, project_dependend))
+    if image:
+        return image
+
+    surf, placeholder = try_loading_image(image_path, project_dependend)
+
+    if placeholder:
+        set_placeholder(UI_type, get_global("<Project_Opened>").value, (image_path, project_dependend))
+        image:Texture|Image = cached_UI_tex_load(wm.renderer, surf, UI_type, None)
+    else:
+        image:Texture|Image = cached_UI_tex_load(wm.renderer, surf, UI_type, (image_path, project_dependend), new_texture=True)
+
+    return image
+
+def fetch_texture(wm:Window_Manager, image_path, project_dependend=True):
+    image:Texture|Image = try_texture_cache((image_path, project_dependend))
+    if image:
+        return image
+
+    surf, placeholder = try_loading_image(image_path, project_dependend)
+
+    if placeholder:
+        set_placeholder(None, get_global("<Project_Opened>").value, (image_path, project_dependend))
+        image:Texture|Image = cached_texture_load(wm.renderer, surf, None)
+    else:
+        image:Texture|Image = cached_texture_load(wm.renderer, surf, (image_path, project_dependend), new_texture=True)
+
+    return image
 
 def surf_screenshot(window_manager:Window_Manager):
 	return window_manager.renderer.to_surface()
@@ -411,7 +441,28 @@ def sort_folders_by_modification_date(directory:str, last_updated_first=True):
     entries = [entry for entry in os.scandir(directory) if entry.is_dir()]
     return sorted(entries, key=get_latest_file_time, reverse=last_updated_first)
 
-from objects import save_new_scene, save_scene, load_scene, create_Game_Object, create_Dynamic_Object
+def reload_tick_function(project_name:str):
+    # reassign tick-function in main.py
+    user_created_game_objects = 0
+    for scene in get_global("<SCENES>").value:
+        for game_object in copy(scene):
+            if not game_object.engine_generated:
+                delete_game_object(game_object)
+                user_created_game_objects += 1
+    
+    file_path = os.path.join(os.getcwd(), f'Projects\\{project_name}', "Scripts", "main.py")
+    spec = importlib.util.spec_from_file_location("main", file_path)
+    module = importlib.util.module_from_spec(spec)
+    try:
+        spec.loader.exec_module(module)
+
+        set_global("<Update_tick_func>", module.tick)
+    except Exception as e:
+        Raise_Error(ALL_WINDOW_MANAGERS[0], f"An error occurred in the main.py of the project:\n{e}")
+
+    return user_created_game_objects
+
+from objects import save_new_scene, save_scene, load_scene, delete_game_object, create_Game_Object, create_Dynamic_Object
 
 def create_project(name:str):
     print(f"Creating project {name}...")
@@ -452,18 +503,24 @@ def create_project(name:str):
 
 def reload_project_dependend_assets(window_m:Window_Manager):
     print("Reloading project dependencies...")
-    get_global("<(cache) PLACEHOLDER_CACHE>").value.pop(get_global("<Project_Opened>").value, None)
+
     project_dependend = 0
+    if RUN_BY_ENGINE:
+        project_dependend += reload_tick_function(get_global("<Project_Opened>").value)
+
+    get_global("<(cache) PLACEHOLDER_CACHE>").value.pop(get_global("<Project_Opened>").value, None)
+
     for ui_element in window_m.UI_elements:
         if ui_element.project_dependend:
-            project_dependend += 1
             ui_element.image_update_needed = True
+            project_dependend += 1
     
-    for scene in range(len(get_global("<SCENES>").value)):
-        for game_obj in get_global("<SCENES>").value[scene]:
+    for scene in get_global("<SCENES>").value:
+        for game_obj in scene:
             if game_obj.project_dependend:
-                project_dependend += 1
                 game_obj.image_update_needed = True
+                #project_dependend += 1
+
     print(f"Reloaded {project_dependend} project dependend assets")
 
 def load_project(window_m:Window_Manager):
@@ -519,14 +576,6 @@ def open_project(window_m:Window_Manager, initial_directory:str|None=None, folde
     print(f"Opening Project '{project_name}'...")
     load_project(window_m)
     print(f"Opened Project '{project_name}'")
-
-    # reassign tick-function in main.py
-    file_path = os.path.join(os.getcwd(), f'Projects\\{project_name}', "Scripts", "main.py")
-    spec = importlib.util.spec_from_file_location("main", file_path)
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-
-    set_global("<Update_tick_func>", module.tick)
 
     # test
     file_path = f"Projects\\{project_name}\\Scripts\\main.py"

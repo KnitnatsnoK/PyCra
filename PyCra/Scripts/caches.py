@@ -38,19 +38,32 @@ def set_placeholder(UI_type, open_project:str, input:tuple):
         placeholder_cache[open_project] = set()
     placeholder_cache[open_project].add((UI_type, input))
 
-# This function takes in the UI_type and several properties of an UI-Element to save it to a cache
+# takes in the UI_type and several properties of an UI-Element to save it to a cache
 UI_tex_cache:dict[tuple[int, tuple], Texture] = {}
-def cached_UI_tex_load(renderer:Renderer, surf:pg.Surface, UI_type, input:tuple) -> Texture:
-    if (UI_type, input) in UI_tex_cache:
+def cached_UI_tex_load(renderer:Renderer, surf:pg.Surface, UI_type, input:tuple, new_texture=False) -> Texture:
+    if (UI_type, input) in UI_tex_cache and not new_texture:
         return UI_tex_cache[(UI_type, input)]
     
     UI_tex_cache[(UI_type, input)] = Texture.from_surface(renderer, surf)
     return UI_tex_cache[(UI_type, input)]
 
-# This function takes in the UI_type and several properties of an UI-Element to return a Texture if its in the cache, else False
+# takes in the UI_type and several properties of an UI-Element to return a Texture if its in the cache, else False
 def try_UI_tex_cache(UI_type, input:tuple) -> Texture:
     if (UI_type, input) in UI_tex_cache:
         return UI_tex_cache[(UI_type, input)]
+    return False
+
+texture_cache:dict[tuple, Texture] = {}
+def cached_texture_load(renderer:Renderer, surf:pg.Surface, key:tuple, new_texture=False) -> Texture:
+    if key in texture_cache and not new_texture:
+        return texture_cache[key]
+    
+    texture_cache[key] = Texture.from_surface(renderer, surf)
+    return texture_cache[key]
+
+def try_texture_cache(key:tuple) -> Texture:
+    if key in texture_cache:
+        return texture_cache[key]
     return False
 
 # class decoder
