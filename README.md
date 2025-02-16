@@ -15,7 +15,7 @@ It provides a simple yet powerful framework for creating 2D games programmatical
 
 ## Installation
 To install Pycra, clone the repository and run setup.py to install all dependencies:
-```bash
+```cmd
 git clone https://github.com/KnitnatsnoK/PyCra
 cd PyCra/PyCra
 python Setup/setup.py
