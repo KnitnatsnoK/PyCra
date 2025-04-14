@@ -13,7 +13,8 @@ class Window_Manager:
         self.renderer = Renderer(window, accelerated=1, target_texture=True)
         self.scale = 1.0
         self.target_texture = Texture(self.renderer, self.window_size/self.scale, target=True)
-        self.renderer.target = self.target_texture
+        if not manual_render:
+            self.renderer.target = self.target_texture
 
         self.UI_elements:list = []
         self.second_UI_elements:list = []
@@ -47,6 +48,7 @@ class Window_Manager:
             self.set_window_size(copy(self.saved_window_size))
 
 ALL_WINDOW_MANAGERS:list[Window_Manager] = []
+set_global("<ALL_WINDOW_MANAGERS>", ALL_WINDOW_MANAGERS)
 top_window:Window = None
 
 def quit_engine():

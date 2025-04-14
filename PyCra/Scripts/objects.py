@@ -112,7 +112,7 @@ class DynamicObject(GameObject):
         pass
 
     def physics(self, fps_factor:float):
-        self.acc.y = GameObject.G * (0.6 + self.mass*0.4)
+        self.acc.y = GameObject.G.value * (0.6 + self.mass*0.4)
 
         self.vel += self.acc * fps_factor
         self.vel.x *= (1 - self.friction)**fps_factor if self.ground else 1.0
@@ -402,35 +402,35 @@ def delete_game_object(game_object:GameObject):
         set_global("<Selected_Object>", None)
     SCENES[game_object.scene].remove(game_object)
 
-def create_Game_Object(scene:int|str|None, layer:int|str, window_manager:int, pos:vec2, size:vec2, user_creation=True, physics_obj:bool=True, **kwargs):
+def create_GameObject(scene:int|str|None, layer:int|str, window_manager:int, pos:vec2, size:vec2, user_creation=True, physics_obj:bool=True, **kwargs):
     obj_scene = get_valid_scene(scene)
     game_object = GameObject(window_manager, obj_scene, layer, pos, size, user_creation, physics_obj, **kwargs)
     if scene is not None:
         add_game_object_to_scene(obj_scene, game_object)
     return game_object
 
-def create_Dynamic_Object(scene:int|str|None, layer:int|str, window_manager:int, pos:vec2, size:vec2, mass:float=None, e:float=0, user_creation=True, physics_obj:bool=True, **kwargs):
+def create_DynamicObject(scene:int|str|None, layer:int|str, window_manager:int, pos:vec2, size:vec2, mass:float=None, e:float=0, user_creation=True, physics_obj:bool=True, **kwargs):
     obj_scene = get_valid_scene(scene)
     dynamic_object = DynamicObject(window_manager, obj_scene, layer, pos, size, user_creation, physics_obj, mass, e, **kwargs)
     if scene is not None:
         add_game_object_to_scene(obj_scene, dynamic_object)
     return dynamic_object
 
-def create_Texture_Object(scene:int|str|None, layer:int|str, window_manager:int, pos:vec2, size:vec2, image_path:str="PyCra Icon.jpg", project_path:bool=True, user_creation=True, **kwargs):
+def create_TextureObject(scene:int|str|None, layer:int|str, window_manager:int, pos:vec2, size:vec2, image_path:str="PyCra Icon.jpg", project_path:bool=True, user_creation=True, **kwargs):
     obj_scene = get_valid_scene(scene)
     texture_object = TextureObject(window_manager, obj_scene, layer, pos, size, user_creation, image_path, project_path, **kwargs)
     if scene is not None:
         add_game_object_to_scene(obj_scene, texture_object)
     return texture_object
 
-def create_Background_Object(scene:int|str|None, layer:int|str, window_manager:int, pos:vec2, size:vec2, depth:float=0, x_axis:bool=True, y_axis:bool=True, image_path:str="PyCra Icon.jpg", project_path:bool=True, user_creation=True, **kwargs):
+def create_BackgroundObject(scene:int|str|None, layer:int|str, window_manager:int, pos:vec2, size:vec2, depth:float=0, x_axis:bool=True, y_axis:bool=True, image_path:str="PyCra Icon.jpg", project_path:bool=True, user_creation=True, **kwargs):
     obj_scene = get_valid_scene(scene)
     background_object = BackgroundObject(window_manager, obj_scene, layer, pos, size, user_creation, depth, x_axis, y_axis, image_path, project_path, **kwargs)
     if scene is not None:
         add_game_object_to_scene(obj_scene, background_object)
     return background_object
 
-def create_Dynamic_Texture_Object(scene:int|str|None, layer:int|str, window_manager:int, pos:vec2, size:vec2, mass:float=None, e:float=0, image_path:str="PyCra Icon.jpg", project_path:bool=True, user_creation=True, physics_obj:bool=True, **kwargs):
+def create_DynamicTextureObject(scene:int|str|None, layer:int|str, window_manager:int, pos:vec2, size:vec2, mass:float=None, e:float=0, image_path:str="PyCra Icon.jpg", project_path:bool=True, user_creation=True, physics_obj:bool=True, **kwargs):
     obj_scene = get_valid_scene(scene)
     dynamic_texture_object = DynamicTextureObject(window_manager, obj_scene, layer, pos, size, user_creation, physics_obj, mass, e, image_path, project_path, **kwargs)
     if scene is not None:
@@ -638,10 +638,10 @@ def tick_game_objects(fps_factor:float, delta_time:float, update=True):
     global SELECTED_OBJ
     if MOUSE.down_buttons[0] and KEYS.check_pressed(pg.K_SPACE) and ALL_WINDOW_MANAGERS[0].last_action_element is None:
         if not KEYS.check_pressed(pg.K_LSHIFT):
-            create_Dynamic_Texture_Object(SCENE.value, "game_objects", ALL_WINDOW_MANAGERS[0], copy(MOUSE.scene_position), vec2(40), user_creation=False, center=True)
+            create_DynamicTextureObject(SCENE.value, "game_objects", ALL_WINDOW_MANAGERS[0], copy(MOUSE.scene_position), vec2(40), user_creation=False, center=True)
         else:
             for _ in range(5):
-                create_Dynamic_Object(SCENE.value, "game_objects", ALL_WINDOW_MANAGERS[0], copy(MOUSE.scene_position+random_vec2(-100, 100)), vec2(30), user_creation=False, center=True)
+                create_DynamicObject(SCENE.value, "game_objects", ALL_WINDOW_MANAGERS[0], copy(MOUSE.scene_position+random_vec2(-100, 100)), vec2(30), user_creation=False, center=True)
         SELECTED_OBJ.value = get_global("<Last_Added_Game_Object>").value
 
         set_global("<Game Objects>", f"Game Objects: {len(SCENES[SCENE.value])}")

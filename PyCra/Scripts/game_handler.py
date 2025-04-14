@@ -116,15 +116,16 @@ def draw_all_windows():
         tick_UI_elements(wm.second_UI_elements)
 
         #wm.re_scale(min(2, max(0.4, wm.scale + MOUSE.wheel.y/10)))
-        
+
         wm.renderer.target = wm.target_texture
+        wm.renderer.clear()
         tick_scene()
         wm.renderer.target = None
-        wm.target_texture.draw(dstrect=(0, 0, *(wm.window_size)))
+        wm.target_texture.draw(dstrect=(0, 0, *wm.window_size))
 
         draw_main_UI_elements(wm)
         draw_UI_elements(wm.second_UI_elements)
-
+        
         handle_top_action(wm)
         wm.renderer.present()
 

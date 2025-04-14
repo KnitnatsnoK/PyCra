@@ -2,7 +2,7 @@
 Includes global setting values
 """
 
-from global_variables import Variable
+from global_variables import Variable, set_global
 
 # debug constants
 JOYSTICK_MANAGER_DEBUG = False
@@ -11,7 +11,8 @@ PRINT_ASSET_EXISTENCE = False
 SHOW_PERFORMANCE = Variable(True)
 
 # physic constants
-G = 1
+G = Variable(1.0)
+set_global("G", G)
 
 # delta-time
 ALLOW_SPEED_UP = False

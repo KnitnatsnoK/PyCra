@@ -569,7 +569,7 @@ def reload_tick_function(project_name:str):
 
     return user_created_game_objects
 
-from objects import save_new_scene, save_scene, load_scene, delete_game_object, create_Game_Object, create_Dynamic_Object
+from objects import save_new_scene, save_scene, load_scene, delete_game_object, create_GameObject, create_DynamicObject
 
 def create_project(name:str):
     print(f"Creating project {name}...")
@@ -599,8 +599,8 @@ def create_project(name:str):
 
     # Scenes
     main_window_manager = ALL_WINDOW_MANAGERS[0]
-    example_scene = [create_Game_Object(None, "game_objects", main_window_manager, vec2(480, 465), vec2(500, 50), user_creation=False, center=True),
-                     create_Dynamic_Object(None, "game_objects", main_window_manager, vec2(480, 15), vec2(30), user_creation=False, center=True),
+    example_scene = [create_GameObject(None, "game_objects", main_window_manager, vec2(480, 465), vec2(500, 50), user_creation=False, center=True),
+                     create_DynamicObject(None, "game_objects", main_window_manager, vec2(480, 15), vec2(30), user_creation=False, center=True),
                      ]
     example_layers = ["game_objects"]
 
@@ -645,6 +645,8 @@ def load_project(window_m:Window_Manager):
     get_global("<Scene_Names>").value.clear()
     get_global("<Scene>").value = 0
     get_global("<LAYERS>").value.clear()
+    set_global("<ALL_WINDOW_MANAGERS>", [get_global("<ALL_WINDOW_MANAGERS>").value[0]])
+    get_global("<ALL_WINDOW_MANAGERS>").value[0].re_scale(get_global("<ALL_WINDOW_MANAGERS>").value[0].scale)
 
     for i, scene_name in enumerate(scene_names):
         load_scene(i, scenes_path + "\\", scene_name)

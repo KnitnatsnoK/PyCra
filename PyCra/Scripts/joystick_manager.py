@@ -284,12 +284,6 @@ def render_joysticks_input():
         joystick_manager.window_manager.renderer.clear()
 
         tick_UI_elements(joystick_manager.window_manager.UI_elements)
-
-        joystick_manager.window_manager.renderer.target = joystick_manager.window_manager.target_texture
-        #tick_scene()
-        joystick_manager.window_manager.renderer.target = None
-        joystick_manager.window_manager.target_texture.draw(dstrect=(0, 0, *(joystick_manager.window_manager.window_size)))
-        
         draw_UI_elements(joystick_manager.window_manager.UI_elements)
         show_joystick_input(joystick_manager.axes, joystick_manager)
         
