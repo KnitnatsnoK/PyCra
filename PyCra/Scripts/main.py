@@ -2,34 +2,40 @@ if __name__ == "__main__":
     from assets import *
 
 from value_assets import *
+from window_manager import create_window, delete_top_window, window_to_top, set_top_window
 from imports import *
 from UI import *
 from CUUI import *
 from objects import tick_game_objects, delete_game_object, create_Object_from_parameters, GameObject, SCENES, SCENE_NAMES, SCENE, SELECTED_OBJ
-from joystick_manager import reset_axes_changes, handle_joystick_event, apply_joystick_changes, render_joysticks_input, joystick_managers
 
-WINDOW_SIZE = MAIN_MONITOR_SIZE / 2
+WINDOW_SIZE = MAIN_MONITOR_SIZE / 5 * 3
 main_window, main_window_manager = create_window("PyCra Engine -- beta", WINDOW_SIZE)
 main_window_name = set_global("<main_window_name>", main_window.title)
-
+CAMERA.window_manager = main_window_manager
 set_global("main_window_manager", main_window_manager)
 
-# Open last modified project
+from joystick_manager import reset_axes_changes, handle_joystick_event, apply_joystick_changes, render_joysticks_input, joystick_managers
+
 create_project("Test Project")
 
+# Open last modified project
 sorted_projects = sort_folders_by_modification_date("Projects\\")
 if len(sorted_projects):
     last_project_name = sorted_projects[0].name
     open_project(main_window_manager, folder_path=f"Projects\\{last_project_name}")
 
-for jm in joystick_managers:
-    window_to_top(jm.window_manager.window)
+if JOYSTICK_WINDOW:
+    for jm in joystick_managers:
+        window_to_top(jm.window_manager.window)
 
-create_Rect_Outline(main_window_manager, ALL_WINDOW_MANAGERS[0].window_size/2, vec2(200, 100), vec3(0, 0, 255), width=4, action=DEFAULT_ACTION, center=True)
+create_Rect_Outline(main_window_manager, ALL_WINDOW_MANAGERS[0].window_size/2, vec2(200, 100), vec3(0, 0, 255), width=4, action=DEFAULT_ACTION, center=True, user_creation=False)
 
 create_toolbar(main_window_manager, vec2(0), [Text_Box(main_window_manager, vec2(0), text_color=vec3(225), text="Project", font_size=16, action=[   Text_Box(main_window_manager, vec2(0), text_color=vec3(225), text="Open", font_size=16, action=OPEN_PROJECT),
                                                                                                                                                     Text_Box(main_window_manager, vec2(0), text_color=vec3(225), text="Create", font_size=16, action=CREATE_PROJECT),
                                                                                                                                                     ]),
+                                              Text_Box(main_window_manager, vec2(0), text_color=vec3(225), text="Assets", font_size=16, action=[Text_Box(main_window_manager, vec2(0), text_color=vec3(225), text="Reload", font_size=16, action=RELOAD_PROJECT_DEPENDEND_ASSETS),
+                                                                                                                                                Text_Box(main_window_manager, vec2(0), text_color=vec3(225), text="Load", font_size=16, action=LOAD_NEW_ASSETS),
+                                                                                                                                                ]),
                                               Text_Box(main_window_manager, vec2(0), text_color=vec3(225), text="Quit", font_size=16, action=QUIT_ENGINE),
                                               Icon(main_window_manager, vec2(0), vec2(31), default_bg=True, image_path="run_button.png", action=RUN_PROJECT),
                                               Text_Box(main_window_manager, vec2(0), text_color=vec3(225), text=set_global("<Game Objects>", f"Game Objects: {len(SCENES[SCENE.value])}"), font_size=16),
@@ -77,7 +83,8 @@ def handle_events():
             pass
 
     apply_joystick_changes()
-    render_joysticks_input()
+    if JOYSTICK_WINDOW:
+        render_joysticks_input()
 
 COPY = None
 def handle_keymouse_input():
@@ -122,6 +129,9 @@ def handle_keymouse_input():
 
     KEYS.any_down = np.any(KEYS.down) or np.any(MOUSE.down_buttons)
 
+    for action in ACTIONS.values():
+        action.update_state()
+
 dt = 0 if SET_FPS == 0 else 1 / SET_FPS
 fps_factor = 1
 def tick_scene():
@@ -140,30 +150,45 @@ def draw_all_windows():
         wm.renderer.clear()
         tick_main_UI_elements(wm)
         tick_UI_elements(wm.second_UI_elements)
+
+        #wm.re_scale(min(2, max(0.4, wm.scale + MOUSE.wheel.y/10)))
+
+        wm.renderer.target = wm.target_texture
         tick_scene()
+        wm.renderer.target = None
+        wm.target_texture.draw(dstrect=(0, 0, *(wm.window_size)))
+
         draw_main_UI_elements(wm)
         draw_UI_elements(wm.second_UI_elements)
         
         handle_top_action(wm)
         wm.renderer.present()
 
-fps_update_frequency = 0.5
-last_fps_time = time() - fps_update_frequency
-last_time = perf_counter()
+fps_update_threshold = 1/2
+last_fps_time = time.time() - fps_update_threshold
+last_time = time.perf_counter()
+accumulated_dt = 0
+accumulated_frames = 0
 def handle_fps_count():
-    global last_fps_time, last_time, dt
-    dt = perf_counter() - last_time
-    last_time = perf_counter()
+    global last_fps_time, last_time, dt, accumulated_dt, accumulated_frames
     clock.tick(SET_FPS)
-    if not SHOW_PERFORMANCE:
+    if not SHOW_PERFORMANCE.value:
         return
-    if time() - last_fps_time >= fps_update_frequency:
-        last_fps_time = time()
+    accumulated_frames += 1
+    now = time.perf_counter()
+    dt = now - last_time
+    accumulated_dt += now - last_time
+    last_time = now
+    if time.time() - last_fps_time >= fps_update_threshold:
+        last_fps_time = time.time() + (time.time() - last_fps_time)%fps_update_threshold
         opened_project_name = "No project opened" if get_global("<Project_Opened>").value is None else get_global("<Project_Opened>").value
-        if dt == 0:
+        accumulated_dt /= accumulated_frames
+        if accumulated_dt == 0:
             main_window.title = main_window_name.value + f" -- {opened_project_name} --" + f" 0ms | infinite FPS"
         else:
-            main_window.title = main_window_name.value + f" -- {opened_project_name} --" + f" {dt*1000:.1f}ms | {1/dt:.1f} FPS"
+            main_window.title = main_window_name.value + f" -- {opened_project_name} --" + f" {accumulated_dt*1000:.1f}ms | {1/accumulated_dt:.1f} FPS"
+        accumulated_dt = 0
+        accumulated_frames = 0
 
 print("SET FPS:", SET_FPS)
 clock = pg.time.Clock()

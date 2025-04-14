@@ -1,6 +1,6 @@
 from value_assets import *
 from window_manager import Window_Manager, center_vec2, quit_engine
-from imports import KEYS, MOUSE, render_text, load_image, random_vec3, create_project, open_project, run_project, center, create_surface, create_boundary
+from imports import KEYS, MOUSE, render_text, load_image, random_vec3, load_new_assets, create_project, open_project, run_project, reload_project_dependend_assets, center, create_surface, create_boundary
 from objects import SCENES, SCENE_NAMES, SCENE, LAYERS, save_scene, save_new_scene, load_scene
 
 class UI_Element:
@@ -107,6 +107,10 @@ class UI_Element:
                 print("No scene was created")
         elif self.action == RUN_PROJECT:
             run_project(self.window_manager)
+        elif self.action == RELOAD_PROJECT_DEPENDEND_ASSETS:
+            reload_project_dependend_assets(self.window_manager)
+        elif self.action == LOAD_NEW_ASSETS:
+            load_new_assets()
 
     def draw(self):
         if self.image_update_needed:

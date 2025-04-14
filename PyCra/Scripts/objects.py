@@ -36,8 +36,13 @@ class GameObject:
         # image
         self.animation_manager:AnimationManager|None = None
 
+        self.tile = vec2(0, 0)
+
         self.image_update_needed = False
         self.update_image()
+
+        if not hasattr(self, "original_image_size"):
+            self.original_image_size:vec2 = vec2(self.image.get_rect()[2:4])
 
     def update_image(self):
         self.image:Texture|Image = try_UI_tex_cache(GameObject, ())
@@ -53,12 +58,12 @@ class GameObject:
 
     def draw(self):
         window_pos = self.get_window_pos()
-        if not ((-self.size.x < window_pos.x < self.window_manager.window_size.x) and (-self.size.y < window_pos.y < self.window_manager.window_size.y)):
+        if not ((-self.size.x < window_pos.x < self.window_manager.window_size.x/self.window_manager.scale) and (-self.size.y < window_pos.y < self.window_manager.window_size.y/self.window_manager.scale)):
             return
         if self.image_update_needed:
             self.image_update_needed = False
             self.update_image()
-        self.image.draw(dstrect=(window_pos, self.size))
+        self.image.draw(srcrect=(self.tile.x*self.original_image_size.x, self.tile.y*self.original_image_size.y, *self.original_image_size), dstrect=(window_pos, self.size))
 
     def handle_animation(self, delta_time:float):
         if self.animation_manager is not None:
@@ -79,7 +84,7 @@ class GameObject:
         self.pos = center(copy(pos), self.size, **self.parameters[2])
 
 class DynamicObject(GameObject):
-    def __init__(self, window_manager:Window_Manager, scene:int, layer:int|str, pos:vec2, size:vec2, user_creation=True, physics_obj:bool=True, mass:float=None, e:float=0, **kwargs):
+    def __init__(self, window_manager:Window_Manager, scene:int, layer:int|str, pos:vec2, size:vec2, user_creation=True, physics_obj:bool=True, mass:float=None, friction:float=0, e:float=0, **kwargs):
         if not isinstance(self, DynamicTextureObject):
             self.color = random_vec3(0, 255)
         mass = mass if mass is not None else size.x * size.y / 1000
@@ -90,6 +95,7 @@ class DynamicObject(GameObject):
 
         self.static = False
         self.acc = vec2(0)
+        self.friction = friction
         self.e = e
         self.ground = False
 
@@ -107,9 +113,9 @@ class DynamicObject(GameObject):
 
     def physics(self, fps_factor:float):
         self.acc.y = GameObject.G * (0.6 + self.mass*0.4)
-        self.ground = False
 
         self.vel += self.acc * fps_factor
+        self.vel.x *= (1 - self.friction)**fps_factor if self.ground else 1.0
         self.saved_vel = copy(self.vel)
 
         self.pos += self.vel * fps_factor
@@ -133,13 +139,15 @@ class DynamicObject(GameObject):
                 self.vel.y *= -1
 
         self.center = self.pos + self.size*0.5
+        self.ground = False
 
 class TextureObject(GameObject):
     def __init__(self, window_manager:Window_Manager, scene:int, layer:int|str, pos:vec2, size:vec2, user_creation=True, image_path:str="PyCra Icon.jpg", project_path:bool=True, **kwargs):
         self.image_path = image_path
         self.project_dependend = project_path
 
-        size = size * vec2(try_loading_image(image_path, self.project_dependend)[0].size) if isinstance(size, int) else (vec2(try_loading_image(image_path, self.project_dependend)[0].size) if size is None else size)
+        self.original_image_size = vec2(try_loading_image(image_path, self.project_dependend)[0].size)
+        size = size * self.original_image_size if isinstance(size, int) else (self.original_image_size if size is None else size)
 
         window_manager = ALL_WINDOW_MANAGERS[window_manager] if isinstance(window_manager, int) else window_manager
         super().__init__(window_manager, scene, layer, pos, size, user_creation, False, **kwargs)
@@ -147,7 +155,7 @@ class TextureObject(GameObject):
 
     def update_image(self):
         if get_placeholder_status(TextureObject, get_global("<Project_Opened>").value, (self.image_path, self.project_dependend)):
-            self.image:Texture|Image = try_UI_tex_cache(TextureObject, None)
+            self.image:Texture|Image = try_texture_cache(None)
             return
         
         self.image = fetch_texture(self.window_manager, self.image_path, self.project_dependend)
@@ -174,8 +182,8 @@ class BackgroundObject(TextureObject):
         start_x = window_pos.x%self.size.x - self.size.x
         start_y = window_pos.y%self.size.y - self.size.y
 
-        cols = int(self.window_manager.window_size.x // self.size.x) + 2
-        rows = int(self.window_manager.window_size.y // self.size.y) + 2
+        cols = int((self.window_manager.window_size.x/self.window_manager.scale) // self.size.x) + 2
+        rows = int((self.window_manager.window_size.y/self.window_manager.scale) // self.size.y) + 2
 
         if self.image_update_needed:
             self.image_update_needed = False
@@ -184,7 +192,7 @@ class BackgroundObject(TextureObject):
         for col in range(cols):
             for row in range(rows):
                 pos = vec2(start_x + col * self.size.x, start_y + row * self.size.y)
-                if not ((-self.size.x < pos.x < self.window_manager.window_size.x) and (-self.size.y < pos.y < self.window_manager.window_size.y)):
+                if not ((-self.size.x < pos.x < self.window_manager.window_size.x/self.window_manager.scale) and (-self.size.y < pos.y < self.window_manager.window_size.y/self.window_manager.scale)):
                     continue
                 self.image.draw(dstrect=(pos, self.size))
 
@@ -197,7 +205,8 @@ class DynamicTextureObject(DynamicObject):
         self.image_path = image_path
         self.project_dependend = project_path
 
-        size = size * vec2(try_loading_image(self.image_path, self.project_dependend)[0].size) if isinstance(size, int) else (vec2(try_loading_image(self.image_path, self.project_dependend)[0].size) if size is None else size)
+        self.original_image_size = vec2(try_loading_image(image_path, self.project_dependend)[0].size)
+        size = size * self.original_image_size if isinstance(size, int) else (self.original_image_size if size is None else size)
 
         window_manager = ALL_WINDOW_MANAGERS[window_manager] if isinstance(window_manager, int) else window_manager
         super().__init__(window_manager, scene, layer, pos, size, user_creation, physics_obj, mass, e, **kwargs)
@@ -205,7 +214,7 @@ class DynamicTextureObject(DynamicObject):
 
     def update_image(self):
         if get_placeholder_status(DynamicTextureObject, get_global("<Project_Opened>").value, (self.image_path, self.project_dependend)):
-            self.image:Texture|Image = try_UI_tex_cache(DynamicTextureObject, None)
+            self.image:Texture|Image = try_texture_cache(None)
             return
         
         self.image = fetch_texture(self.window_manager, self.image_path, self.project_dependend)
@@ -270,10 +279,20 @@ class Animation:
         self.current_frame = 0
         self.time_accumulator = 0
 
+        self.playback_rate = 1.0
+        self.pause = 0.0
+
         self.finish = False
 
     def update(self, delta_time):
-        self.time_accumulator += delta_time
+        if self.pause > 0:
+            self.pause -= delta_time
+            if self.pause > 0:
+                return
+            self.time_accumulator += abs(self.pause) * self.playback_rate
+            self.pause = 0
+
+        self.time_accumulator += delta_time * self.playback_rate
         if self.time_accumulator >= self.frame_durations[self.current_frame]:
             self.time_accumulator -= self.frame_durations[self.current_frame]
             self.current_frame += 1
@@ -307,6 +326,10 @@ class AnimationManager:
             if isinstance(frame, str):
                 animation.frames[i] = fetch_texture(self.game_obj.window_manager, frame)
 
+    def set_playback_rate(self, animation:str, playback_rate:float):
+        if animation in self.animations:
+            self.animations[animation].playback_rate = playback_rate
+
     def play(self, name:str):
         """Switch to a different animation."""
         if RUN_BY_PROJECT and name in self.animations:
@@ -327,6 +350,10 @@ class AnimationManager:
             self.await_finish = (return_idle,)
         else:
             self.interrupt_current_animation(return_idle)
+
+    def pause(self, time:float):
+        if self.current_animation is not None:
+            self.current_animation.pause = time
 
     def interrupt_current_animation(self, return_idle=False):
         self.current_animation.finish = False
@@ -417,6 +444,10 @@ def create_Object_from_parameters(parameters:tuple, scene:int|str|None) -> GameO
     if obj_scene is not None:
         add_game_object_to_scene(obj_scene, game_object)
     return game_object
+
+def replace_obj_image(game_object:TextureObject, new_image:Texture):
+    game_object.image = new_image
+    game_object.original_image_size = vec2(new_image.get_rect()[2:4])
 
 def sweep_and_prune_x(obj_list:list[GameObject]):
     sorted_game_objects = []
@@ -601,8 +632,8 @@ def Narrow_Phase_Detection(game_object_pairs:list[tuple[DynamicObject, DynamicOb
         resolve_AABB(pair[pointer], pair[1-pointer], pair[pointer].pos, pair[pointer].size, pair[1-pointer].pos, pair[1-pointer].size)
 
 SELECTED_OBJ = Variable(None)
-TICK_GAME_OBJECTS = Variable(True)
-set_global("TICK_GAME_OBJECTS", TICK_GAME_OBJECTS)
+PAUSE = Variable(False)
+set_global("PAUSE", PAUSE)
 def tick_game_objects(fps_factor:float, delta_time:float, update=True):
     global SELECTED_OBJ
     if MOUSE.down_buttons[0] and KEYS.check_pressed(pg.K_SPACE) and ALL_WINDOW_MANAGERS[0].last_action_element is None:
@@ -615,7 +646,7 @@ def tick_game_objects(fps_factor:float, delta_time:float, update=True):
 
         set_global("<Game Objects>", f"Game Objects: {len(SCENES[SCENE.value])}")
 
-    if update and TICK_GAME_OBJECTS.value:
+    if update and not PAUSE.value:
         for game_object in SCENES[SCENE.value]:
             game_object.tick(fps_factor)
 
@@ -629,11 +660,11 @@ def tick_game_objects(fps_factor:float, delta_time:float, update=True):
             SELECTED_OBJ.value.vel = vec2(0)
             SELECTED_OBJ.value.parameters[4] = copy(MOUSE.scene_position)
     
-    saved_time = perf_counter()
+    saved_time = time.perf_counter()
     #game_object_pairs = Broad_Phase_Detection(SCENES[SCENE.value])
     Broad_Phase_Detection(SCENES[SCENE.value])
     if MOUSE.down_buttons[1]:
-        print("Broad Phase", f"{(perf_counter()-saved_time)*1000:.2f}ms")
+        print("Broad Phase", f"{(time.perf_counter()-saved_time)*1000:.2f}ms")
 
     # saved_time = perf_counter()
     # Narrow_Phase_Detection(game_object_pairs)
@@ -646,12 +677,13 @@ def tick_game_objects(fps_factor:float, delta_time:float, update=True):
         set_global("<Selected_Object>", None)
     for game_object in SCENES[SCENE.value]:
         game_object.center = game_object.pos + game_object.size*0.5
-        game_object.handle_animation(delta_time)
+        if not PAUSE.value:
+            game_object.handle_animation(delta_time)
         game_object.draw()
 
         if handle_selected_objects:
-            window_pos = game_object.get_window_pos()
-            if (window_pos.x < MOUSE.position.x < window_pos.x + game_object.size.x) and (window_pos.y < MOUSE.position.y < window_pos.y + game_object.size.y):
+            window_pos = game_object.get_window_pos() * game_object.window_manager.scale
+            if (window_pos.x < MOUSE.scaled_position.x < window_pos.x + game_object.size.x*game_object.window_manager.scale) and (window_pos.y < MOUSE.scaled_position.y < window_pos.y + game_object.size.y*game_object.window_manager.scale):
                 if old_selected_obj == game_object:
                     set_global("<Selected_Object>", None)
                 else:
@@ -686,7 +718,7 @@ def save_scene(scene:int|list[GameObject], layers:None|list[str], path:str, name
         pickle.dump((layers, [game_object.parameters for game_object in game_objects if game_object.engine_generated]), file)
 
 def load_scene(scene:int, path:str, name:str):
-    saved_time = perf_counter()
+    saved_time = time.perf_counter()
     scene_path = path + name + ".pkl.gz"
     with gzip.open(scene_path, 'rb') as file:
         while len(SCENES) <= scene:
@@ -702,4 +734,4 @@ def load_scene(scene:int, path:str, name:str):
 
     set_global("<Game Objects>", f"Game Objects: {len(SCENES[scene])}")
 
-    print(f"Scene load time: {(perf_counter()-saved_time)*1000:.2f}ms")
+    print(f"Scene load time: {(time.perf_counter()-saved_time)*1000:.2f}ms")

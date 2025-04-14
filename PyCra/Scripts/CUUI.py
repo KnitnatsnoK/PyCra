@@ -40,39 +40,6 @@ class Circle_Button(UI_Element):
         self.pressed.value = not self.pressed.value
         self.image_update_needed = True
 
-set_global("<Selected_Object>", None)
-class Rect_Outline(UI_Element):
-    def __init__(self, window_manager:Window_Manager, pos:vec2|None, size:vec2, color:vec3=vec3(0, 0, 0), alpha:int=255, width:int=1, action:int=None, **kwargs):
-        super().__init__(window_manager, pos, size, action)
-        
-        self.pos = center(self.pos, self.size, **kwargs)
-        
-        self.color = color
-        self.alpha = alpha
-        self.width = width
-        self.render = False
-
-        # image
-        self.image_update_needed = False
-        self.update_image()
-
-    def update_image(self):
-        surf = create_surface(self.size, flags=(0 if self.alpha == 255 else pg.SRCALPHA))
-        surf.set_colorkey(vec3(0))
-
-        draw_rect_outline(surf, vec2(0), self.size, self.color, self.alpha, self.width)
-
-        self.image:Texture|Image = Texture.from_surface(self.window_manager.renderer, surf)
-
-    def check_for_action(self):
-        selected_obj = get_global("<Selected_Object>").value
-        self.render = selected_obj is not None
-        if self.render:
-            if self.size != selected_obj.size + vec2(4):
-                self.image_update_needed = True
-                self.size = selected_obj.size + vec2(4)
-            self.pos = center(selected_obj.get_window_pos()+selected_obj.size/2, self.size, **{"center":True})
-
 class Rect_Button(UI_Element):
     def __init__(self, window_manager:Window_Manager, pos:vec2|None, size:vec2, manual:bool=False, pressed:bool=False):
         super().__init__(window_manager, pos, size, None)
@@ -103,11 +70,44 @@ class Rect_Button(UI_Element):
         self.pressed.value = not self.pressed.value
         self.image_update_needed = True
 
+set_global("<Selected_Object>", None)
+class Rect_Outline(UI_Element):
+    def __init__(self, window_manager:Window_Manager, pos:vec2|None, size:vec2, color:vec3=vec3(0, 0, 0), alpha:int=255, width:int=1, action:int=None, **kwargs):
+        super().__init__(window_manager, pos, size, action)
+        
+        self.pos = center(self.pos, self.size, **kwargs)
+        
+        self.color = color
+        self.alpha = alpha
+        self.width = width
+        self.render = False
+
+        # image
+        self.image_update_needed = False
+        self.update_image()
+
+    def update_image(self):
+        surf = create_surface(self.size, flags=(0 if self.alpha == 255 else pg.SRCALPHA))
+        surf.set_colorkey(vec3(0))
+
+        draw_rect_outline(surf, vec2(0), self.size, self.color, self.alpha, self.width)
+
+        self.image:Texture|Image = Texture.from_surface(self.window_manager.renderer, surf)
+
+    def check_for_action(self):
+        selected_obj = get_global("<Selected_Object>").value
+        self.render = selected_obj is not None
+        if self.render:
+            if self.size != selected_obj.size*selected_obj.window_manager.scale + vec2(4):
+                self.image_update_needed = True
+                self.size = selected_obj.size*selected_obj.window_manager.scale + vec2(4)
+            self.pos = center((selected_obj.get_window_pos()+selected_obj.size/2)*selected_obj.window_manager.scale, self.size, **{"center":True})
+
 class Anti_Circle(UI_Element):
     def __init__(self, window_manager:Window_Manager, pos:vec2|None, radius:int, color:vec3=vec3(0, 0, 0), alpha:int=0, circle_alpha:int=255):
         super().__init__(window_manager, vec2(0), vec2(window_manager.window.size), None)
         self.anti = True
-        self.anti_radius = radius
+        self.radius = radius
         self.anti_pos = pos
 
         self.color = color
@@ -119,13 +119,10 @@ class Anti_Circle(UI_Element):
         self.update_image()
 
     def update_image(self):
-        surf = draw_anti_circle(self.window_manager, self.anti_pos, self.anti_radius, self.color, self.alpha, self.circle_alpha)
+        surf = draw_anti_circle(self.window_manager, self.anti_pos, self.radius, self.color, self.alpha, self.circle_alpha)
         self.image:Texture|Image = Texture.from_surface(self.window_manager.renderer, surf)
 
     def check_for_action(self):
-        pass
-        
-    def handle_action(self):
         pass
 
 class Anti_Rect(UI_Element):
@@ -133,8 +130,7 @@ class Anti_Rect(UI_Element):
         super().__init__(window_manager, vec2(0), vec2(window_manager.window.size), None)
         self.anti = True
         self.anti_size = size
-        self.anti_pos = pos
-        self.anti_pos = center(self.anti_pos, self.anti_size, **kwargs)
+        self.anti_pos = center(pos, self.anti_size, **kwargs)
 
         self.color = color
         self.alpha = alpha
@@ -150,31 +146,33 @@ class Anti_Rect(UI_Element):
 
     def check_for_action(self):
         pass
-        
-    def handle_action(self):
-        pass
 
-def create_Circle_Button(window_m:Window_Manager, pos:vec2|None, radius:int, manual:bool=False, pressed:bool=False):
+def create_Circle_Button(window_m:Window_Manager, pos:vec2|None, radius:int, manual:bool=False, pressed:bool=False, user_creation=True):
     circle_button = Circle_Button(window_m, pos, radius, manual, pressed)
-    window_m.UI_elements.append(circle_button)
+    if RUN_BY_PROJECT or not user_creation:
+        window_m.UI_elements.append(circle_button)
     return circle_button
 
-def create_Rect_Outline(window_m:Window_Manager, pos:vec2|None, size:vec2, color:vec3=vec3(0, 0, 0), alpha:int=255, width:int=1, action:int=None, **kwargs):
-    rect_outline = Rect_Outline(window_m, pos, size, color, alpha, width, action, **kwargs)
-    window_m.UI_elements.append(rect_outline)
-    return rect_outline
-
-def create_Rect_Button(window_m:Window_Manager, pos:vec2|None, size:vec2):
-    rect_button = Rect_Button(window_m, pos, size)
-    window_m.UI_elements.append(rect_button)
+def create_Rect_Button(window_m:Window_Manager, pos:vec2|None, size:vec2, manual:bool=False, pressed:bool=False, user_creation=True):
+    rect_button = Rect_Button(window_m, pos, size, manual, pressed)
+    if RUN_BY_PROJECT or not user_creation:
+        window_m.UI_elements.append(rect_button)
     return rect_button
 
-def create_Anti_Circle(window_m:Window_Manager, pos:vec2|None, radius:int, color:vec3=vec3(0, 0, 0), alpha:int=0, circle_alpha:int=255):
+def create_Rect_Outline(window_m:Window_Manager, pos:vec2|None, size:vec2, color:vec3=vec3(0, 0, 0), alpha:int=255, width:int=1, action:int=None, user_creation=True, **kwargs):
+    rect_outline = Rect_Outline(window_m, pos, size, color, alpha, width, action, **kwargs)
+    if RUN_BY_PROJECT or not user_creation:
+        window_m.UI_elements.append(rect_outline)
+    return rect_outline
+
+def create_Anti_Circle(window_m:Window_Manager, pos:vec2|None, radius:int, color:vec3=vec3(0, 0, 0), alpha:int=0, circle_alpha:int=255, user_creation=True):
     circle_button = Anti_Circle(window_m, pos, radius, color, alpha, circle_alpha)
-    window_m.UI_elements.append(circle_button)
+    if RUN_BY_PROJECT or not user_creation:
+        window_m.UI_elements.append(circle_button)
     return circle_button
 
-def create_Anti_Rect(window_m:Window_Manager, pos:vec2|None, size:vec2, color:vec3=vec3(0, 0, 0), alpha:int=0, rect_alpha:int=255, **kwargs):
+def create_Anti_Rect(window_m:Window_Manager, pos:vec2|None, size:vec2, color:vec3=vec3(0, 0, 0), alpha:int=0, rect_alpha:int=255, user_creation=True, **kwargs):
     rect_button = Anti_Rect(window_m, pos, size, color, alpha, rect_alpha, **kwargs)
-    window_m.UI_elements.append(rect_button)
+    if RUN_BY_PROJECT or not user_creation:
+        window_m.UI_elements.append(rect_button)
     return rect_button

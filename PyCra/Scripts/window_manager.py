@@ -2,13 +2,19 @@ if __name__ == "__main__":
     from assets import *
 
 from value_assets import *
+from sound import THREAD_KILLERS
 
 # window functions
 class Window_Manager:
     def __init__(self, window:Window, manual_render:bool=False):
         self.window = window
         self.window_size = vec2(window.size)
-        self.renderer = Renderer(window, accelerated=1)
+
+        self.renderer = Renderer(window, accelerated=1, target_texture=True)
+        self.scale = 1.0
+        self.target_texture = Texture(self.renderer, self.window_size/self.scale, target=True)
+        self.renderer.target = self.target_texture
+
         self.UI_elements:list = []
         self.second_UI_elements:list = []
         self.second_UI_elements_parent = None
@@ -18,6 +24,10 @@ class Window_Manager:
         self.fullscreen = False
         self.saved_window_size = copy(self.window_size)
 
+    def re_scale(self, scale:float):
+        self.scale = scale
+        self.target_texture = Texture(self.renderer, self.window_size/self.scale, target=True)
+
     def set_window_size(self, size:vec2, engine_change=False):
         if not engine_change and RUN_BY_ENGINE:
             return
@@ -26,6 +36,8 @@ class Window_Manager:
         self.saved_window_size = copy(self.window_size)
         self.window_size = size
         self.window.position = center_vec2(size, center)
+
+        self.re_scale(self.scale)
 
     def toggle_fullscreen(self):
         self.fullscreen = not self.fullscreen
@@ -38,6 +50,11 @@ ALL_WINDOW_MANAGERS:list[Window_Manager] = []
 top_window:Window = None
 
 def quit_engine():
+    for thread_killer in THREAD_KILLERS:
+        THREAD_KILLERS[thread_killer] = True
+    pg.joystick.quit()
+    pg.mixer.quit()
+    pg.font.quit()
     pg.quit()
     sys.exit()
 

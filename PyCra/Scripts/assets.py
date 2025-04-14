@@ -5,6 +5,7 @@ Includes all needed import modules for all files
 import pygame as pg
 pg.init()
 pg.font.init()
+pg.mixer.init()
 pg.joystick.init()
 from pygame._sdl2 import Window, Renderer, Image, Texture
 import numpy as np
@@ -14,7 +15,7 @@ import sys
 import os
 import screeninfo
 from random import random, randint, choice, choices, seed
-from time import time, perf_counter, sleep
+import time
 from tkinter import filedialog
 from copy import copy
 import ctypes
@@ -27,6 +28,7 @@ import shlex
 import winreg
 import types
 import importlib.util
+import threading
 
 RUN_BY_PROJECT = False
 if os.path.basename(os.path.dirname(__file__)) == "Scripts":

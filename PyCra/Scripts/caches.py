@@ -28,7 +28,7 @@ def load_image(image_path:str, preferred_size:vec2|None=None):
     return copy(image)
 
 # placeholder cache
-placeholder_cache:dict[tuple, set] = {}
+placeholder_cache:dict[str, set] = {}
 set_global("<(cache) PLACEHOLDER_CACHE>", placeholder_cache)
 def get_placeholder_status(UI_type, open_project:str, input:tuple):
     return (open_project in placeholder_cache) and ((UI_type, input) in placeholder_cache[open_project])

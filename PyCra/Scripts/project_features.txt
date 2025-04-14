@@ -1,0 +1,22 @@
+<Core Engine Features>
+
+Tilemaps & Tilemap Editor – Efficient handling of large maps with tilesets.
+# Audio System – Support for sound effects, music, and spatial audio.
+# Animation System – Sprite animations, frame-based and skeletal animations.
+.. Networking – Support for multiplayer via WebSockets, UDP/TCP, or rollback netcode.
+# Action System – Custom action handling for game logic (multiple key bindings).
+Scene Transitions & Effects – Fade-ins, wipes, and other effects between scenes.
+
+<Advanced Features>
+
+AI System – Pathfinding (A*), state machines, and behavior trees.
+Particle System – Fire, smoke, explosions, and weather effects.
+Cutscene System – A way to create scripted cutscenes easily.
+Save/Load System – Storing game state, player progress, and settings.
+# Scripting Hot Reloading – Reloading scripts without restarting the game.
+Shader Support – Custom shaders for special effects like lighting and water.
+
+<Platform & Integration Features>
+
+Cross-Platform Exporting – Support for Windows, Linux, macOS, Android, etc.
+Cloud Saves & Leaderboards – Online storage for progress and high scores.

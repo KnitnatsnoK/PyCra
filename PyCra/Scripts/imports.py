@@ -1,27 +1,44 @@
 from value_assets import *
 
 # window manager
-from window_manager import *
+from window_manager import Window_Manager, ALL_WINDOW_MANAGERS
 
 def change_main_window_name(name, user_change=True):
     if (not user_change) or RUN_BY_PROJECT:
         set_global("<main_window_name>", name)
 
+# boolean vec2
+class bvec2:
+    def __init__(self, x: bool, y: bool):
+        self.x = x
+        self.y = y
+    def __iter__(self):
+        return iter((self.x, self.y))
+    def __repr__(self):
+        return f"bvec2({self.x}, {self.y})"
+
 # Camera
 class Camera:
     def __init__(self, binded_obj=None):
         self.binded_obj = binded_obj
+        self.window_manager:Window_Manager = None if binded_obj is None else binded_obj.window_manager
         self.pos:vec2 = vec2(0)
 
         self.smoothness = 6
         self.dead_zone:vec2 = vec2(100, 70)
         self.last_mouse_pos:vec2 = None
+        self.last_window_scale = 1.0 if binded_obj is None else binded_obj.window_manager.scale
+
+        self.edge_top = None
+        self.edge_bottom = None
+        self.edge_right = None
+        self.edge_left = None
 
     def update(self, fps_factor:float):
         if self.binded_obj is None:
             return
         if RUN_BY_PROJECT:
-            if self.binded_obj.scene != get_global("<Scene>").value or not get_global("TICK_GAME_OBJECTS").value:
+            if self.binded_obj.scene != get_global("<Scene>").value or get_global("PAUSE").value:
                 return
             offset = self.calculate_offset()
             # only apply changes for axis outside the dead zone
@@ -33,22 +50,43 @@ class Camera:
             new_offset = vec2(min(dead_offset.x, max(-dead_offset.x, new_offset.x)), min(dead_offset.y, max(-dead_offset.y, new_offset.y)))
             
             self.pos += new_offset
+            self.handle_zoom()
+
+            if self.edge_top is not None:
+                self.pos.y = max(self.edge_top, self.pos.y)
+            if self.edge_bottom is not None:
+                self.pos.y = min(self.edge_bottom + self.window_manager.window_size.y*self.window_manager.scale, self.pos.y)
+            if self.edge_right is not None:
+                self.pos.x = min(self.edge_right + self.window_manager.window_size.x*self.window_manager.scale, self.pos.x)
+            if self.edge_left is not None:
+                self.pos.x = max(self.edge_left, self.pos.x)
             return
         
         if MOUSE.pressed_buttons[2]:
             if self.last_mouse_pos is not None:
-                self.pos += self.last_mouse_pos - MOUSE.position
+                self.pos -= MOUSE.position_change / self.window_manager.scale
+
             self.last_mouse_pos = MOUSE.position
         else:
             self.last_mouse_pos = None
+        self.handle_zoom()
 
-    def calculate_offset(self):
-        return (self.binded_obj.center - self.binded_obj.window_manager.window_size/2) - self.pos
+    def calculate_offset(self) -> vec2:
+        return (self.binded_obj.center - self.binded_obj.window_manager.window_size/self.binded_obj.window_manager.scale/2) - self.pos
 
     def bind_object(self, obj, auto_snap=True):
         self.binded_obj = obj
+        self.window_manager = self.binded_obj.window_manager
         if auto_snap:
             self.pos += self.calculate_offset()
+
+    def handle_zoom(self):
+        return
+        zoom_factor = self.window_manager.scale / self.last_window_scale
+        self.last_window_scale = self.window_manager.scale
+        if zoom_factor != 1.0:
+            print(zoom_factor, (MOUSE.position - self.window_manager.window_size/2) * (zoom_factor - 1))
+        self.pos += (MOUSE.position - self.window_manager.window_size/2) * (zoom_factor - 1)
 
 CAMERA = Camera()
 set_global("<Camera>", CAMERA)
@@ -107,7 +145,7 @@ class Keys:
         
         self.extra_changes.clear()
 
-    def check_pressed(self, key_id) -> bool:
+    def check_pressed(self, key_id:int) -> bool:
         if key_id >= len(self.pressed):
             if key_id in self.pressed_extra:
                 return self.pressed_extra[key_id]
@@ -116,7 +154,7 @@ class Keys:
         else:
             return self.pressed[key_id]
         
-    def check_down(self, key_id) -> bool:
+    def check_down(self, key_id:int) -> bool:
         if key_id >= len(self.down):
             if key_id in self.down_extra:
                 return self.down_extra[key_id]
@@ -125,7 +163,7 @@ class Keys:
         else:
             return self.down[key_id]
         
-    def check_up(self, key_id) -> bool:
+    def check_up(self, key_id:int) -> bool:
         if key_id >= len(self.up):
             if key_id in self.up_extra:
                 return self.up_extra[key_id]
@@ -151,11 +189,17 @@ class Mouse:
         self.wheel:vec2 = vec2(0)
 
         self.position:vec2 = self.get_position()
+        self.scaled_position:vec2 = self.get_scaled_position()
         self.global_position:vec2 = self.get_global_position()
         self.scene_position:vec2 = self.get_scene_position()
 
+        self.last_position:vec2 = copy(self.position)
+        self.position_change = self.position - self.last_position
+
     def get_data(self):
         self.get_position()
+        self.get_position_change()
+        self.get_scaled_position()
         self.get_global_position()
         self.get_scene_position()
         self.get_button_data()
@@ -164,6 +208,15 @@ class Mouse:
         self.position = vec2(pg.mouse.get_pos())
         return self.position
     
+    def get_position_change(self) -> vec2:
+        self.position_change = self.position - self.last_position
+        self.last_position:vec2 = copy(self.position)
+        return self.position_change
+    
+    def get_scaled_position(self) -> vec2:
+        self.scaled_position = self.position/CAMERA.last_window_scale
+        return self.scaled_position
+
     def get_global_position(self) -> vec2:
         pt = POINT()
         ctypes.windll.user32.GetCursorPos(ctypes.byref(pt))
@@ -171,7 +224,7 @@ class Mouse:
         return self.global_position
 
     def get_scene_position(self) -> vec2:
-        self.scene_position = self.position + CAMERA.pos
+        self.scene_position = self.scaled_position + CAMERA.pos
         return self.scene_position
 
     def get_button_data(self) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
@@ -189,6 +242,48 @@ class Mouse:
 
 MOUSE = Mouse()
 set_global("MOUSE", MOUSE)
+
+# actions
+class Action:
+    def __init__(self, binded_inputs:list[int]|int):
+        self.binded_inputs = binded_inputs
+
+        self.last_pressed = False
+        self.pressed = False
+        self.down = False
+        self.up = False
+
+    def update_state(self):
+        if isinstance(self.binded_inputs, list):
+            pressed = False
+            for binded_input in self.binded_inputs:
+                pressed |= KEYS.check_pressed(binded_input)
+            self.pressed = pressed
+        else:
+            self.pressed = KEYS.check_pressed(self.binded_inputs)
+
+        self.down = self.pressed and not self.last_pressed
+        self.up = self.last_pressed and not self.pressed
+
+        self.last_pressed = self.pressed
+
+ACTIONS:dict[str, Action] = {}
+set_global("<ACTIONS>", ACTIONS)
+def create_Action(name:str, binded_inputs:list[int]|int):
+    ACTIONS[name] = Action(binded_inputs)
+
+def rebind_Action(name:str, binded_inputs:list[int]|int):
+    if name in ACTIONS:
+        ACTIONS[name].binded_inputs = binded_inputs
+
+def action_pressed(name:str):
+    return ACTIONS[name].pressed
+
+def action_down(name:str):
+    return ACTIONS[name].down
+
+def action_up(name:str):
+    return ACTIONS[name].up
 
 # flatten
 def double_flatten(list_of_lists:list[list]):
@@ -323,7 +418,6 @@ def run_script(window_m:Window_Manager, file_path:str):
     if not os.path.isfile(file_path):
         Raise_Error(window_m, f"The file '{file_path}' does not exist.")
         return
-    
     try:
         result = subprocess.run([sys.executable, os.path.join(os.getcwd(), file_path)], check=True)
         # print(f"Script finished with return code: {result.returncode}")
@@ -399,8 +493,21 @@ def copy_file(source_file:str, destination_folder:str, overwrite:bool=False):
     if os.path.exists(destination_file):
         if PRINT_ASSET_EXISTENCE:
             print(f"The file '{destination_file}' already exists.")
+        return False
     else:
         shutil.copy(source_file, destination_file)
+        return True
+
+def load_files(target_path:str):
+    loaded_file_paths = filedialog.askopenfilenames(initialdir=None)
+    for path in loaded_file_paths:
+        if not copy_file(path, target_path):
+            print(os.path.basename(path), f"is already in '{os.path.basename(os.path.normpath(target_path))}'")
+
+def load_new_assets():
+    print("Copying files into the Assets folder...")
+    load_files(f'Projects\\{get_global("<Project_Opened>").value}\\Assets\\')
+    print("Copied files into the Assets folder")
 
 def relative_format_paths(target_directory: str, format:str=".py"):
     """
@@ -589,10 +696,10 @@ def run_project(window_m:Window_Manager):
     print(f"Running '{project_opened}'...\n")
 
     # run project here
-    start_time = perf_counter()
+    start_time = time.perf_counter()
     run_script(window_m, f'Projects\\{project_opened}\\Scripts\\game_handler.py')
 
-    print(f"\nFinished running '{project_opened}' with {perf_counter()-start_time:2f}s runtime")
+    print(f"\nFinished running '{project_opened}' with {time.perf_counter()-start_time:2f}s runtime")
 
 # render functions
 def render_text_line(text:str, font:str=None, font_size:int=18, text_color:vec3=vec3(255)) -> pg.Surface:

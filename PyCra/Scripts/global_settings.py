@@ -2,10 +2,13 @@
 Includes global setting values
 """
 
+from global_variables import Variable
+
 # debug constants
 JOYSTICK_MANAGER_DEBUG = False
+JOYSTICK_WINDOW = False
 PRINT_ASSET_EXISTENCE = False
-SHOW_PERFORMANCE = True
+SHOW_PERFORMANCE = Variable(True)
 
 # physic constants
 G = 1
